@@ -73,16 +73,10 @@ static const unsigned int DEFAULT_MIN_RELAY_TX_FEE = 100;
 struct LockPoints;
 
 /** Default for accepting alerts from the P2P network. */
-static const bool DEFAULT_ALERTS = true;
 /** Default for DEFAULT_WHITELISTRELAY. */
 static const bool DEFAULT_WHITELISTRELAY = true;
 /** Default for DEFAULT_WHITELISTFORCERELAY. */
 static const bool DEFAULT_WHITELISTFORCERELAY = true;
-/** Default for -minrelaytxfee, minimum relay fee for transactions
- * We are ~100 times smaller then bitcoin now (2016-03-01), set minRelayTxFee only 10 times higher
- * so it's still 10 times lower comparing to bitcoin.
- */
-static const unsigned int DEFAULT_MIN_RELAY_TX_FEE = 10000; // was 1000
 /** Default for -maxorphantx, maximum number of orphan transactions kept in memory */
 static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS = 100;
 /** Default for -limitancestorcount, max number of in-mempool ancestors */
