@@ -5,7 +5,6 @@
 #include "activemasternode.h"
 #include "consensus/validation.h"
 #include "init.h"
-#include "governance.h"
 #include "masternode.h"
 #include "masternode-payments.h"
 #include "masternode-sync.h"
