@@ -4,7 +4,6 @@
 
 #include "activemasternode.h"
 #include "consensus/validation.h"
-#include "darksend.h"
 #include "init.h"
 #include "governance.h"
 #include "masternode.h"
