@@ -174,6 +174,7 @@ BITCOIN_CORE_H = \
   support/cleanse.h \
   support/events.h \
   support/pagelocker.h \
+  spentindex.h \
   spork.h \
   sync.h \
   threadsafety.h \
