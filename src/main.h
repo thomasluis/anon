@@ -18,7 +18,6 @@
 #include <string>
 #include <vector>
 
-<<<<<<< HEAD
 #include <boost/unordered_map.hpp>
 
 class CBlockIndex;
@@ -140,10 +139,6 @@ BOOST_STATIC_ASSERT(DEFAULT_BLOCK_PRIORITY_SIZE <= DEFAULT_BLOCK_MAX_SIZE);
 struct BlockHasher {
     size_t operator()(const uint256& hash) const { return hash.GetCheapHash(); }
 };
-=======
-// Maximum number of bytes pushable to the stack
-static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520;
->>>>>>> fa951669e1251ee35e91494960dd0445eb85603c
 
 // Maximum number of non-push operations per script
 static const int MAX_OPS_PER_SCRIPT = 201;
