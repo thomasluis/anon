@@ -153,6 +153,7 @@ BITCOIN_CORE_H = \
   pow.h \
   primitives/block.h \
   primitives/transaction.h \
+  prevector.h \
   protocol.h \
   pubkey.h \
   random.h \
