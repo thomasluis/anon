@@ -339,9 +339,8 @@ void CMasternodeSync::ProcessTick()
     uiInterface.NotifyAdditionalDataSyncProgressChanged(nSyncProgress);
 
     // sporks synced but blockchain is not, wait until we're almost at a recent block to continue
-    if (Params().NetworkIDString() != CBaseChainParams::REGTEST &&
-        !IsBlockchainSynced() && nRequestedMasternodeAssets > MASTERNODE_SYNC_SPORKS)
-    {
+    if (Params().NetworkIDString() != "regtest" &&
+        !IsBlockchainSynced() && nRequestedMasternodeAssets > MASTERNODE_SYNC_SPORKS) {
         LogPrintf("CMasternodeSync::ProcessTick -- nTick %d nRequestedMasternodeAssets %d nRequestedMasternodeAttempt %d -- blockchain is not synced yet\n", nTick, nRequestedMasternodeAssets, nRequestedMasternodeAttempt);
         nTimeLastMasternodeList = GetTime();
         nTimeLastPaymentVote = GetTime();
