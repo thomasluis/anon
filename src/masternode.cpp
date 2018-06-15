@@ -850,12 +850,12 @@ bool CMasternodePing::CheckSignature(CPubKey &pubKeyMasternode, int &nDos)
     std::string strError = "";
     nDos = 0;
 
-    if (!darkSendSigner.VerifyMessage(pubKeyMasternode, vchSig, strMessage, strError))
-    {
-        LogPrintf("CMasternodePing::CheckSignature -- Got bad Masternode ping signature, masternode=%s, error: %s\n", vin.prevout.ToStringShort(), strError);
-        nDos = 33;
-        return false;
-    }
+    // if (!darkSendSigner.VerifyMessage(pubKeyMasternode, vchSig, strMessage, strError))
+    // {
+    //     LogPrintf("CMasternodePing::CheckSignature -- Got bad Masternode ping signature, masternode=%s, error: %s\n", vin.prevout.ToStringShort(), strError);
+    //     nDos = 33;
+    //     return false;
+    // }
     return true;
 }
 
