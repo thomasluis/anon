@@ -302,7 +302,7 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue);
  *
  * @param[out]   setFilesToPrune   The set of file indices that can be unlinked will be returned
  */
-void FindFilesToPrune(std::set<int>& setFilesToPrune, uint64_t nPruneAfterHeight);
+void FindFilesToPrune(std::set<int>& setFilesToPrune);
 
 /**
  *  Actually unlink the specified files
@@ -823,8 +823,12 @@ bool GetAddressUnspent(uint160 addressHash, int type, std::vector<std::pair<CAdd
 /** Functions for disk access for blocks */
 
 bool WriteBlockToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHeader::MessageStartChars& messageStart);
-bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams);
-bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus::Params& consensusParams);
+bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos
+#ifdef FORK_CB_INPUT
+        , int nHeight = -1
+#endif
+);
+bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex);
 
 /** Functions for validating blocks and updating the block tree */
 
