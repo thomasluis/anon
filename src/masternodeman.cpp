@@ -1429,7 +1429,7 @@ void CMasternodeMan::ProcessVerifyReply(CNode *pnode, CMasternodeVerification &m
 
                     mWeAskedForVerification[pnode->addr] = mnv;
                     mnv.Relay();
-                // }
+                }
                 else
                 {
                     vpMasternodesToBan.push_back(&(*it));
