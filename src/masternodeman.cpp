@@ -879,8 +879,8 @@ void CMasternodeMan::ProcessMasternodeConnections()
     {
         if (pnode->fMasternode)
         {
-            if (darkSendPool.pSubmittedToMasternode != NULL && pnode->addr == darkSendPool.pSubmittedToMasternode->addr)
-                continue;
+            //if (darkSendPool.pSubmittedToMasternode != NULL && pnode->addr == darkSendPool.pSubmittedToMasternode->addr)
+            //    continue;
             LogPrintf("Closing Masternode connection: peer=%d, addr=%s\n", pnode->id, pnode->addr.ToString());
             pnode->fDisconnect = true;
         }
@@ -1318,19 +1318,19 @@ void CMasternodeMan::SendVerifyReply(CNode *pnode, CMasternodeVerification &mnv)
 
     std::string strMessage = strprintf("%s%d%s", activeMasternode.service.ToString(false), mnv.nonce, blockHash.ToString());
 
-    if (!darkSendSigner.SignMessage(strMessage, mnv.vchSig1, activeMasternode.keyMasternode))
-    {
-        LogPrintf("MasternodeMan::SendVerifyReply -- SignMessage() failed\n");
-        return;
-    }
+    // if (!darkSendSigner.SignMessage(strMessage, mnv.vchSig1, activeMasternode.keyMasternode))
+    // {
+    //     LogPrintf("MasternodeMan::SendVerifyReply -- SignMessage() failed\n");
+    //     return;
+    // }
 
     std::string strError;
 
-    if (!darkSendSigner.VerifyMessage(activeMasternode.pubKeyMasternode, mnv.vchSig1, strMessage, strError))
-    {
-        LogPrintf("MasternodeMan::SendVerifyReply -- VerifyMessage() failed, error: %s\n", strError);
-        return;
-    }
+    // if (!darkSendSigner.VerifyMessage(activeMasternode.pubKeyMasternode, mnv.vchSig1, strMessage, strError))
+    // {
+    //     LogPrintf("MasternodeMan::SendVerifyReply -- VerifyMessage() failed, error: %s\n", strError);
+    //     return;
+    // }
 
     pnode->PushMessage(NetMsgType::MNVERIFY, mnv);
     netfulfilledman.AddFulfilledRequest(pnode->addr, strprintf("%s", NetMsgType::MNVERIFY) + "-reply");
@@ -1393,8 +1393,8 @@ void CMasternodeMan::ProcessVerifyReply(CNode *pnode, CMasternodeVerification &m
         {
             if ((CAddress)it->addr == pnode->addr)
             {
-                if (darkSendSigner.VerifyMessage(it->pubKeyMasternode, mnv.vchSig1, strMessage1, strError))
-                {
+                // if (darkSendSigner.VerifyMessage(it->pubKeyMasternode, mnv.vchSig1, strMessage1, strError))
+                // {
                     // found it!
                     prealMasternode = &(*it);
                     if (!it->IsPoSeVerified())
@@ -1413,23 +1413,23 @@ void CMasternodeMan::ProcessVerifyReply(CNode *pnode, CMasternodeVerification &m
                     std::string strMessage2 = strprintf("%s%d%s%s%s", mnv.addr.ToString(false), mnv.nonce, blockHash.ToString(),
                                                         mnv.vin1.prevout.ToStringShort(), mnv.vin2.prevout.ToStringShort());
                     // ... and sign it
-                    if (!darkSendSigner.SignMessage(strMessage2, mnv.vchSig2, activeMasternode.keyMasternode))
-                    {
-                        LogPrintf("MasternodeMan::ProcessVerifyReply -- SignMessage() failed\n");
-                        return;
-                    }
+                    // if (!darkSendSigner.SignMessage(strMessage2, mnv.vchSig2, activeMasternode.keyMasternode))
+                    // {
+                    //     LogPrintf("MasternodeMan::ProcessVerifyReply -- SignMessage() failed\n");
+                    //     return;
+                    // }
 
                     std::string strError;
 
-                    if (!darkSendSigner.VerifyMessage(activeMasternode.pubKeyMasternode, mnv.vchSig2, strMessage2, strError))
-                    {
-                        LogPrintf("MasternodeMan::ProcessVerifyReply -- VerifyMessage() failed, error: %s\n", strError);
-                        return;
-                    }
+                    // if (!darkSendSigner.VerifyMessage(activeMasternode.pubKeyMasternode, mnv.vchSig2, strMessage2, strError))
+                    // {
+                    //     LogPrintf("MasternodeMan::ProcessVerifyReply -- VerifyMessage() failed, error: %s\n", strError);
+                    //     return;
+                    // }
 
                     mWeAskedForVerification[pnode->addr] = mnv;
                     mnv.Relay();
-                }
+                // }
                 else
                 {
                     vpMasternodesToBan.push_back(&(*it));
