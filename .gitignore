@@ -14,6 +14,9 @@ src/zcash/CreateJoinSplit
 
 *zcashTest.pk
 *zcashTest.vk
+*zcash-gtest.dSYM
+*btcpd.dSYM
+*test_bitcoin.dSYM
 
 # autoreconf
 Makefile.in
