@@ -23,6 +23,7 @@
 #include "key.h"
 #include "main.h"
 #include "metrics.h"
+#include "sync.h"
 #include "miner.h"
 #include "net.h"
 #include "rpcserver.h"

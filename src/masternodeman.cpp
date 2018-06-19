@@ -8,6 +8,7 @@
 #include "masternode-sync.h"
 #include "masternodeman.h"
 #include "netfulfilledman.h"
+#include "sync.h"
 #include "util.h"
 #include "chain.h"
 

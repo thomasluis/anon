@@ -25,6 +25,7 @@
 #include "ui_interface.h"
 #include "undo.h"
 #include "util.h"
+#include "sync.h"
 #include "utilmoneystr.h"
 #include "validationinterface.h"
 #include "versionbits.h"

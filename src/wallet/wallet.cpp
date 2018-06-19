@@ -9,15 +9,16 @@
 #include "checkpoints.h"
 #include "coincontrol.h"
 #include "consensus/validation.h"
+#include "crypter.h"
 #include "init.h"
 #include "main.h"
 #include "net.h"
 #include "script/script.h"
 #include "script/sign.h"
+#include "sync.h"
 #include "timedata.h"
 #include "utilmoneystr.h"
 #include "zcash/Note.hpp"
-#include "crypter.h"
 
 #include <assert.h>
 

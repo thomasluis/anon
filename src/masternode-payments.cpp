@@ -2,12 +2,13 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "activemasternode.h"
 #include "masternode-payments.h"
+#include "activemasternode.h"
 #include "masternode-sync.h"
 #include "masternodeman.h"
 #include "netfulfilledman.h"
 #include "spork.h"
+#include "sync.h"
 #include "util.h"
 
 #include <boost/lexical_cast.hpp>
