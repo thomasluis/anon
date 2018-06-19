@@ -530,7 +530,8 @@ bool CMasternodePayments::AddPaymentVote(const CMasternodePaymentVote &vote)
 {
     uint256 blockHash = uint256();
     if (!GetBlockHash(blockHash, vote.nBlockHeight - 101))
-        return false;
+    // if (!GetBlockHash())
+            return false;
 
     if (HasVerifiedPaymentVote(vote.GetHash()))
         return false;

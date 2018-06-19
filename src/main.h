@@ -1068,6 +1068,7 @@ extern uint256 hashPid;
  * Fills hashRet with found hash, if no nBlockHeight is specified - chainActive.Height() is used.
  */
 bool GetBlockHash(uint256& hashRet, int nBlockHeight = -1);
+// bool GetBlockHash();
 
 /** Reject codes greater or equal to this can be returned by AcceptToMemPool
  * for transactions, to signal internal conditions. They cannot and should not
