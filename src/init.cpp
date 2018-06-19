@@ -14,7 +14,7 @@
 #ifdef ENABLE_MINING
 #include "base58.h"
 #endif
-#include "activemasternode.h"
+#include "chain.h"
 #include "checkpoints.h"
 #include "compat/sanity.h"
 #include "consensus/validation.h"
