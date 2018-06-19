@@ -31,6 +31,11 @@
 #include "wallet/asyncrpcoperation_sendmany.h"
 #include "wallet/asyncrpcoperation_shieldcoinbase.h"
 
+#include "masternode-payments.h"
+#include "masternode-sync.h"
+#include "masternodeman.h"
+
+
 #include <sstream>
 
 #include <boost/algorithm/string/replace.hpp>
