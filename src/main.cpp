@@ -1004,6 +1004,27 @@ bool CheckTransactionWithoutProofVerification(const CTransaction& tx, CValidatio
     return true;
 }
 
+int GetInputAge(const CTxIn& txin)
+{
+    CCoinsView viewDummy;
+    CCoinsViewCache view(&viewDummy);
+    {
+        LOCK(mempool.cs);
+        CCoinsViewMemPool viewMempool(pcoinsTip, mempool);
+        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
+
+        const CCoins* coins = view.AccessCoins(txin.prevout.hash);
+
+        if (coins) {
+            if (coins->nHeight < 0)
+                return 0;
+            return chainActive.Height() - coins->nHeight + 1;
+        } else {
+            return -1;
+        }
+    }
+}
+
 bool CheckJoinSplitSigs(const CTransaction& tx, CValidationState &state, const unsigned int flags)
 {
     if (tx.vjoinsplit.size() > 0) {

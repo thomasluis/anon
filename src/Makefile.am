@@ -138,7 +138,7 @@ BITCOIN_CORE_H = \
   memusage.h \
   merkleblock.h \
   masternodeconfig.h \
-  masternode.h \ 
+  masternode.h \
   masternode-payments.h \
   masternode-sync.h \
   masternodeman.h \
@@ -236,7 +236,7 @@ libbitcoin_server_a_SOURCES = \
   merkleblock.cpp \
   masternodeconfig.cpp \
   masternode.cpp \
-  masternode-payments.cpp \ 
+  masternode-payments.cpp \
   masternode-sync.cpp \
   masternodeman.cpp \
   metrics.cpp \
@@ -252,6 +252,7 @@ libbitcoin_server_a_SOURCES = \
   rpcnet.cpp \
   rpcrawtransaction.cpp \
   rpcserver.cpp \
+  rpcmasternode.cpp \
   script/sigcache.cpp \
   timedata.cpp \
   torcontrol.cpp \
