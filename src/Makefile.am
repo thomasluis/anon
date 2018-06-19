@@ -242,6 +242,7 @@ libbitcoin_server_a_SOURCES = \
   metrics.cpp \
   miner.cpp \
   net.cpp \
+  netfulfilledman.cpp \
   noui.cpp \
   policy/fees.cpp \
   pow.cpp \
@@ -260,6 +261,7 @@ libbitcoin_server_a_SOURCES = \
   txmempool.cpp \
   validationinterface.cpp \
   versionbits.cpp \
+  spork.cpp \
   $(BITCOIN_CORE_H) \
   $(LIBZCASH_H)
 
