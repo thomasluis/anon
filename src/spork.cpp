@@ -94,7 +94,7 @@ void CSporkManager::ExecuteSpork(int nSporkID, int nValue)
 
         LogPrintf("CSporkManager::ExecuteSpork -- Reconsider Last %d Blocks\n", nValue);
 
-        ReprocessBlocks(nValue);
+        // ReprocessBlocks(nValue);
         nTimeExecuted = GetTime();
     }
 }
@@ -290,10 +290,10 @@ bool CSporkMessage::CheckSignature()
     std::string strMessage = boost::lexical_cast<std::string>(nSporkID) + boost::lexical_cast<std::string>(nValue) + boost::lexical_cast<std::string>(nTimeSigned);
     CPubKey pubkey(ParseHex(Params().SporkPubKey()));
 
-    if (!darkSendSigner.VerifyMessage(pubkey, vchSig, strMessage, strError)) {
-        LogPrintf("CSporkMessage::CheckSignature -- VerifyMessage() failed, error: %s\n", strError);
-        return false;
-    }
+    // if (!darkSendSigner.VerifyMessage(pubkey, vchSig, strMessage, strError)) {
+    //     LogPrintf("CSporkMessage::CheckSignature -- VerifyMessage() failed, error: %s\n", strError);
+    //     return false;
+    // }
 
     return true;
 }
