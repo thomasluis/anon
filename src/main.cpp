@@ -3628,6 +3628,11 @@ bool ProcessNewBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, bool
     if (!ActivateBestChain(state, pblock))
         return error("%s: ActivateBestChain failed", __func__);
 
+    masternodeSync.IsBlockchainSynced(true);
+
+    LogPrintf("%s : ACCEPTED\n", __func__);
+
+
     return true;
 }
 
