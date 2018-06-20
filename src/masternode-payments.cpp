@@ -997,15 +997,15 @@ void CMasternodePayments::CheckAndRemove()
 //     {
 //         int nTotalVotes = 0;
 //         bool fFound = false;
-//         BOOST_FOREACH (CMasternodePayee &payee, it->second.vecPayees)
-//         {
-//             if (payee.GetVoteCount() >= MNPAYMENTS_SIGNATURES_REQUIRED)
-//             {
-//                 fFound = true;
-//                 break;
-//             }
-//             nTotalVotes += payee.GetVoteCount();
-//         }
+//         // BOOST_FOREACH (CMasternodePayee &payee, it->second.vecPayees)
+//         // {
+//         //     // if (payee.GetVoteCount() >= MNPAYMENTS_SIGNATURES_REQUIRED)
+//         //     // {
+//         //     //     fFound = true;
+//         //     //     break;
+//         //     // }
+//         //     // nTotalVotes += payee.GetVoteCount();
+//         // }
 //         // A clear winner (MNPAYMENTS_SIGNATURES_REQUIRED+ votes) was found
 //         // or no clear winner was found but there are at least avg number of votes
 //         if (fFound || nTotalVotes >= (MNPAYMENTS_SIGNATURES_TOTAL + MNPAYMENTS_SIGNATURES_REQUIRED) / 2)
@@ -1017,12 +1017,12 @@ void CMasternodePayments::CheckAndRemove()
 //         // DEBUG
 //         DBG(
 //             // Let's see why this failed
-//             BOOST_FOREACH (CMasternodePayee &payee, it->second.vecPayees) {
-//                 CTxDestination address1;
-//                 ExtractDestination(payee.GetPayee(), address1);
-//                 CBitcoinAddress address2(address1);
-//                 printf("payee %s votes %d\n", address2.ToString().c_str(), payee.GetVoteCount());
-//             } printf("block %d votes total %d\n", it->first, nTotalVotes);)
+//             // BOOST_FOREACH (CMasternodePayee &payee, it->second.vecPayees) {
+//             //     CTxDestination address1;
+//             //     ExtractDestination(payee.GetPayee(), address1);
+//             //     CBitcoinAddress address2(address1);
+//             //     printf("payee %s votes %d\n", address2.ToString().c_str(), payee.GetVoteCount());
+//             // } printf("block %d votes total %d\n", it->first, nTotalVotes);)
 //         // END DEBUG
 //         // Low data block found, let's try to sync it
 //         uint256 hash;
