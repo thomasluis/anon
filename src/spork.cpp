@@ -5,6 +5,7 @@
 #include "spork.h"
 // #include "darksend.h"
 #include "main.h"
+#include "key.h"
 
 #include <boost/lexical_cast.hpp>
 
