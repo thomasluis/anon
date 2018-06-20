@@ -289,7 +289,7 @@ bool CSporkMessage::CheckSignature()
     //note: need to investigate why this is failing
     std::string strError = "";
     std::string strMessage = boost::lexical_cast<std::string>(nSporkID) + boost::lexical_cast<std::string>(nValue) + boost::lexical_cast<std::string>(nTimeSigned);
-    CPubKey pubkey(ParseHex(Params().SporkPubKey()));
+   // CPubKey pubkey(ParseHex(Params().SporkPubKey()));
 
     // if (!darkSendSigner.VerifyMessage(pubkey, vchSig, strMessage, strError)) {
     //     LogPrintf("CSporkMessage::CheckSignature -- VerifyMessage() failed, error: %s\n", strError);
