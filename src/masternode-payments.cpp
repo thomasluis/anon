@@ -370,7 +370,7 @@ void CMasternodePayments::ProcessMessage(CNode *pfrom, std::string &strCommand, 
         }
         netfulfilledman.AddFulfilledRequest(pfrom->addr, NetMsgType::MASTERNODEPAYMENTSYNC);
 
-        Sync(pfrom);
+        // Sync(pfrom);
         LogPrintf("MASTERNODEPAYMENTSYNC -- Sent Masternode payment votes to peer %d\n", pfrom->id);
     }
     else if (strCommand == NetMsgType::MASTERNODEPAYMENTVOTE)
@@ -412,11 +412,11 @@ void CMasternodePayments::ProcessMessage(CNode *pfrom, std::string &strCommand, 
         }
 
         std::string strError = "";
-        if (!vote.IsValid(pfrom, pCurrentBlockIndex->nHeight, strError))
-        {
-            LogPrint("mnpayments", "MASTERNODEPAYMENTVOTE -- invalid message, error: %s\n", strError);
-            return;
-        }
+        // if (!vote.IsValid(pfrom, pCurrentBlockIndex->nHeight, strError))
+        // {
+        //     LogPrint("mnpayments", "MASTERNODEPAYMENTVOTE -- invalid message, error: %s\n", strError);
+        //     return;
+        // }
 
         if (!CanVote(vote.vinMasternode.prevout, vote.nBlockHeight))
         {
@@ -434,26 +434,26 @@ void CMasternodePayments::ProcessMessage(CNode *pfrom, std::string &strCommand, 
         }
 
         int nDos = 0;
-        if (!vote.CheckSignature(mnInfo.pubKeyMasternode, pCurrentBlockIndex->nHeight, nDos))
-        {
-            if (nDos)
-            {
-                LogPrintf("MASTERNODEPAYMENTVOTE -- ERROR: invalid signature\n");
-                Misbehaving(pfrom->GetId(), nDos);
-            }
-            else
-            {
-                // only warn about anything non-critical (i.e. nDos == 0) in debug mode
-                LogPrint("mnpayments", "MASTERNODEPAYMENTVOTE -- WARNING: invalid signature\n");
-            }
-            // Either our info or vote info could be outdated.
-            // In case our info is outdated, ask for an update,
-            mnodeman.AskForMN(pfrom, vote.vinMasternode);
-            // but there is nothing we can do if vote info itself is outdated
-            // (i.e. it was signed by a mn which changed its key),
-            // so just quit here.
-            return;
-        }
+        // if (!vote.CheckSignature(mnInfo.pubKeyMasternode, pCurrentBlockIndex->nHeight, nDos))
+        // {
+        //     if (nDos)
+        //     {
+        //         LogPrintf("MASTERNODEPAYMENTVOTE -- ERROR: invalid signature\n");
+        //         Misbehaving(pfrom->GetId(), nDos);
+        //     }
+        //     else
+        //     {
+        //         // only warn about anything non-critical (i.e. nDos == 0) in debug mode
+        //         LogPrint("mnpayments", "MASTERNODEPAYMENTVOTE -- WARNING: invalid signature\n");
+        //     }
+        //     // Either our info or vote info could be outdated.
+        //     // In case our info is outdated, ask for an update,
+        //     mnodeman.AskForMN(pfrom, vote.vinMasternode);
+        //     // but there is nothing we can do if vote info itself is outdated
+        //     // (i.e. it was signed by a mn which changed its key),
+        //     // so just quit here.
+        //     return;
+        // }
 
         CTxDestination address1;
         ExtractDestination(vote.payee, address1);
@@ -461,11 +461,11 @@ void CMasternodePayments::ProcessMessage(CNode *pfrom, std::string &strCommand, 
 
         LogPrint("mnpayments", "MASTERNODEPAYMENTVOTE -- vote: address=%s, nBlockHeight=%d, nHeight=%d, prevout=%s\n", address2.ToString(), vote.nBlockHeight, pCurrentBlockIndex->nHeight, vote.vinMasternode.prevout.ToStringShort());
 
-        if (AddPaymentVote(vote))
-        {
-            vote.Relay();
-            masternodeSync.AddedPaymentVote();
-        }
+        // if (AddPaymentVote(vote))
+        // {
+        //     vote.Relay();
+        //     masternodeSync.AddedPaymentVote();
+        // }
     }
 }
 
@@ -534,8 +534,8 @@ bool CMasternodePayments::AddPaymentVote(const CMasternodePaymentVote &vote)
     // if (!GetBlockHash())
             return false;
 
-    if (HasVerifiedPaymentVote(vote.GetHash()))
-        return false;
+    // if (HasVerifiedPaymentVote(vote.GetHash()))
+        // return false;
 
     LOCK2(cs_mapMasternodeBlocks, cs_mapMasternodePaymentVotes);
 
@@ -743,7 +743,7 @@ void CMasternodePayments::CheckAndRemove()
             ++it;
         }
     }
-    LogPrintf("CMasternodePayments::CheckAndRemove -- %s\n", ToString());
+    // LogPrintf("CMasternodePayments::CheckAndRemove -- %s\n", ToString());
 }
 
 // bool CMasternodePaymentVote::IsValid(CNode *pnode, int nValidationHeight, std::string &strError)
