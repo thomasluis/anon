@@ -1720,6 +1720,11 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         }
     }
 
+    // UPDATE MASTERNODE MODULES WITH BLOCKTIP/CURRENTBLOCKINDEX
+    mnodeman.UpdatedBlockTip(chainActive.Tip());
+    mnpayments.UpdatedBlockTip(chainActive.Tip());
+    masternodeSync.UpdatedBlockTip(chainActive.Tip());
+
     LogPrintf("Using masternode config file %s\n", GetMasternodeConfigFile().string());
 
     if (!CheckDiskSpace())

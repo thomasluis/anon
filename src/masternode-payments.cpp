@@ -813,75 +813,75 @@ void CMasternodePayments::CheckAndRemove()
 //     return true;
 // }
 
-// bool CMasternodePayments::ProcessBlock(int nBlockHeight)
-// {
-//     // DETERMINE IF WE SHOULD BE VOTING FOR THE NEXT PAYEE
+bool CMasternodePayments::ProcessBlock(int nBlockHeight)
+{
+    // DETERMINE IF WE SHOULD BE VOTING FOR THE NEXT PAYEE
 
-//     if (fLiteMode || !fMasterNode)
-//         return false;
+    if (fLiteMode || !fMasterNode)
+        return false;
 
-//     // We have little chances to pick the right winner if winners list is out of sync
-//     // but we have no choice, so we'll try. However it doesn't make sense to even try to do so
-//     // if we have not enough data about masternodes.
-//     if (!masternodeSync.IsMasternodeListSynced())
-//         return false;
+    // We have little chances to pick the right winner if winners list is out of sync
+    // but we have no choice, so we'll try. However it doesn't make sense to even try to do so
+    // if we have not enough data about masternodes.
+    if (!masternodeSync.IsMasternodeListSynced())
+        return false;
 
-//     int nRank = mnodeman.GetMasternodeRank(activeMasternode.vin, nBlockHeight - 101, GetMinMasternodePaymentsProto(), false);
+    int nRank = mnodeman.GetMasternodeRank(activeMasternode.vin, nBlockHeight - 101, GetMinMasternodePaymentsProto(), false);
 
-//     if (nRank == -1)
-//     {
-//         LogPrint("mnpayments", "CMasternodePayments::ProcessBlock -- Unknown Masternode\n");
-//         return false;
-//     }
+    if (nRank == -1)
+    {
+        LogPrint("mnpayments", "CMasternodePayments::ProcessBlock -- Unknown Masternode\n");
+        return false;
+    }
 
-//     if (nRank > MNPAYMENTS_SIGNATURES_TOTAL)
-//     {
-//         LogPrint("mnpayments", "CMasternodePayments::ProcessBlock -- Masternode not in the top %d (%d)\n", MNPAYMENTS_SIGNATURES_TOTAL, nRank);
-//         return false;
-//     }
+    if (nRank > MNPAYMENTS_SIGNATURES_TOTAL)
+    {
+        LogPrint("mnpayments", "CMasternodePayments::ProcessBlock -- Masternode not in the top %d (%d)\n", MNPAYMENTS_SIGNATURES_TOTAL, nRank);
+        return false;
+    }
 
-//     // LOCATE THE NEXT MASTERNODE WHICH SHOULD BE PAID
+    // LOCATE THE NEXT MASTERNODE WHICH SHOULD BE PAID
 
-//     LogPrintf("CMasternodePayments::ProcessBlock -- Start: nBlockHeight=%d, masternode=%s\n", nBlockHeight, activeMasternode.vin.prevout.ToStringShort());
+    LogPrintf("CMasternodePayments::ProcessBlock -- Start: nBlockHeight=%d, masternode=%s\n", nBlockHeight, activeMasternode.vin.prevout.ToStringShort());
 
-//     // pay to the oldest MN that still had no payment but its input is old enough and it was active long enough
-//     int nCount = 0;
-//     CMasternode *pmn = mnodeman.GetNextMasternodeInQueueForPayment(nBlockHeight, true, nCount);
+    // pay to the oldest MN that still had no payment but its input is old enough and it was active long enough
+    int nCount = 0;
+    CMasternode *pmn = mnodeman.GetNextMasternodeInQueueForPayment(nBlockHeight, true, nCount);
 
-//     if (pmn == NULL)
-//     {
-//         LogPrintf("CMasternodePayments::ProcessBlock -- ERROR: Failed to find masternode to pay\n");
-//         return false;
-//     }
+    if (pmn == NULL)
+    {
+        LogPrintf("CMasternodePayments::ProcessBlock -- ERROR: Failed to find masternode to pay\n");
+        return false;
+    }
 
-//     LogPrintf("CMasternodePayments::ProcessBlock -- Masternode found by GetNextMasternodeInQueueForPayment(): %s\n", pmn->vin.prevout.ToStringShort());
+    LogPrintf("CMasternodePayments::ProcessBlock -- Masternode found by GetNextMasternodeInQueueForPayment(): %s\n", pmn->vin.prevout.ToStringShort());
 
-//     CScript payee = GetScriptForDestination(pmn->pubKeyCollateralAddress.GetID());
+    CScript payee = GetScriptForDestination(pmn->pubKeyCollateralAddress.GetID());
 
-//     CMasternodePaymentVote voteNew(activeMasternode.vin, nBlockHeight, payee);
+    // CMasternodePaymentVote voteNew(activeMasternode.vin, nBlockHeight, payee);
 
-//     CTxDestination address1;
-//     ExtractDestination(payee, address1);
-//     CBitcoinAddress address2(address1);
+    CTxDestination address1;
+    ExtractDestination(payee, address1);
+    CBitcoinAddress address2(address1);
 
-//     LogPrintf("CMasternodePayments::ProcessBlock -- vote: payee=%s, nBlockHeight=%d\n", address2.ToString(), nBlockHeight);
+    LogPrintf("CMasternodePayments::ProcessBlock -- vote: payee=%s, nBlockHeight=%d\n", address2.ToString(), nBlockHeight);
 
-//     // SIGN MESSAGE TO NETWORK WITH OUR MASTERNODE KEYS
+    // SIGN MESSAGE TO NETWORK WITH OUR MASTERNODE KEYS
 
-//     LogPrintf("CMasternodePayments::ProcessBlock -- Signing vote\n");
-//     if (voteNew.Sign())
-//     {
-//         LogPrintf("CMasternodePayments::ProcessBlock -- AddPaymentVote()\n");
+    // LogPrintf("CMasternodePayments::ProcessBlock -- Signing vote\n");
+    // if (voteNew.Sign())
+    // {
+    //     LogPrintf("CMasternodePayments::ProcessBlock -- AddPaymentVote()\n");
 
-//         if (AddPaymentVote(voteNew))
-//         {
-//             voteNew.Relay();
-//             return true;
-//         }
-//     }
+    //     if (AddPaymentVote(voteNew))
+    //     {
+    //         voteNew.Relay();
+    //         return true;
+    //     }
+    // }
 
-//     return false;
-// }
+    return false;
+}
 
 // void CMasternodePaymentVote::Relay()
 // {
@@ -1069,10 +1069,10 @@ int CMasternodePayments::GetStorageLimit()
     return std::max(int(mnodeman.size() * nStorageCoeff), nMinBlocksToStore);
 }
 
-// void CMasternodePayments::UpdatedBlockTip(const CBlockIndex *pindex)
-// {
-//     pCurrentBlockIndex = pindex;
-//     LogPrint("mnpayments", "CMasternodePayments::UpdatedBlockTip -- pCurrentBlockIndex->nHeight=%d\n", pCurrentBlockIndex->nHeight);
+void CMasternodePayments::UpdatedBlockTip(const CBlockIndex *pindex)
+{
+    pCurrentBlockIndex = pindex;
+    LogPrint("mnpayments", "CMasternodePayments::UpdatedBlockTip -- pCurrentBlockIndex->nHeight=%d\n", pCurrentBlockIndex->nHeight);
 
-//     ProcessBlock(pindex->nHeight + 10);
-// }
+    ProcessBlock(pindex->nHeight + 10);
+}
