@@ -204,7 +204,10 @@ void CMasternodeSync::SwitchToNextAsset()
     case (MASTERNODE_SYNC_LIST):
         nTimeLastPaymentVote = GetTime();
         nRequestedMasternodeAssets = MASTERNODE_SYNC_MNW;
-        LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
+        // LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
+        LogPrintf("CMasternodeSync::SwitchToNextAsset -- Sync has finished\n");
+        nRequestedMasternodeAssets = MASTERNODE_SYNC_FINISHED;
+        activeMasternode.ManageState();
         break;
     // case (MASTERNODE_SYNC_MNW):
     //     nTimeLastGovernanceItem = GetTime();
@@ -212,11 +215,8 @@ void CMasternodeSync::SwitchToNextAsset()
     //     LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
     //     break;
     // case (MASTERNODE_SYNC_GOVERNANCE):
-    //     LogPrintf("CMasternodeSync::SwitchToNextAsset -- Sync has finished\n");
-    //     nRequestedMasternodeAssets = MASTERNODE_SYNC_FINISHED;
     //     //uiInterface.NotifyAdditionalDataSyncProgressChanged(1);
     //     //try to activate our masternode if possible
-    //     activeMasternode.ManageState();
 
         TRY_LOCK(cs_vNodes, lockRecv);
         if (!lockRecv)
@@ -406,15 +406,15 @@ void CMasternodeSync::ProcessTick()
 
             // SPORK : ALWAYS ASK FOR SPORKS AS WE SYNC (we skip this mode now)
 
-            if (!netfulfilledman.HasFulfilledRequest(pnode->addr, "spork-sync"))
-            {
-                // only request once from each peer
-                netfulfilledman.AddFulfilledRequest(pnode->addr, "spork-sync");
-                // get current network sporks
-                pnode->PushMessage(NetMsgType::GETSPORKS);
-                LogPrintf("CMasternodeSync::ProcessTick -- nTick %d nRequestedMasternodeAssets %d -- requesting sporks from peer %d\n", nTick, nRequestedMasternodeAssets, pnode->id);
-                continue; // always get sporks first, switch to the next node without waiting for the next tick
-            }
+            // if (!netfulfilledman.HasFulfilledRequest(pnode->addr, "spork-sync"))
+            // {
+            //     // only request once from each peer
+            //     netfulfilledman.AddFulfilledRequest(pnode->addr, "spork-sync");
+            //     // get current network sporks
+            //     pnode->PushMessage(NetMsgType::GETSPORKS);
+            //     LogPrintf("CMasternodeSync::ProcessTick -- nTick %d nRequestedMasternodeAssets %d -- requesting sporks from peer %d\n", nTick, nRequestedMasternodeAssets, pnode->id);
+            //     continue; // always get sporks first, switch to the next node without waiting for the next tick
+            // }
 
             // MNLIST : SYNC MASTERNODE LIST FROM OTHER CONNECTED CLIENTS
 
