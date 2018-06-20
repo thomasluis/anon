@@ -191,11 +191,11 @@ void CMasternodeSync::SwitchToNextAsset()
     case (MASTERNODE_SYNC_FAILED):
         throw std::runtime_error("Can't switch to next asset from failed, should use Reset() first!");
         break;
-    case (MASTERNODE_SYNC_INITIAL):
-        ClearFulfilledRequests();
-        nRequestedMasternodeAssets = MASTERNODE_SYNC_SPORKS;
-        LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
-        break;
+    // case (MASTERNODE_SYNC_INITIAL):
+    //     ClearFulfilledRequests();
+    //     nRequestedMasternodeAssets = MASTERNODE_SYNC_SPORKS;
+    //     LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
+    //     break;
     // case (MASTERNODE_SYNC_SPORKS):
     //     nTimeLastMasternodeList = GetTime();
     //     nRequestedMasternodeAssets = MASTERNODE_SYNC_LIST;
