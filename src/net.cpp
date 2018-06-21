@@ -375,6 +375,12 @@ CNode* ConnectNode(CAddress addrConnect, const char* pszDest, bool fConnectToMas
             pnode->AddRef();
             return pnode;
         }
+        if (fConnectToMasternode && !pnode->fMasternode) {
+            pnode->AddRef();
+            pnode->fMasternode = true;
+        }
+
+        return pnode;
     }
 
     /// debug print
@@ -396,15 +402,27 @@ CNode* ConnectNode(CAddress addrConnect, const char* pszDest, bool fConnectToMas
         addrman.Attempt(addrConnect);
 
         // Add node
-        CNode* pnode = new CNode(hSocket, addrConnect, pszDest ? pszDest : "", false);
+        CNode* pnode = new CNode(hSocket, addrConnect, pszDest ? pszDest : "", false, true);
         pnode->AddRef();
 
+        // {
+        //     LOCK(cs_vNodes);
+        //     vNodes.push_back(pnode);
+        // }
+
+        // pnode->nTimeConnected = GetTime();
+
+        pnode->nTimeConnected = GetTime();
+        if (fConnectToMasternode) {
+            pnode->AddRef();
+            pnode->fMasternode = true;
+        }
+
+        pnode->AddRef();
         {
             LOCK(cs_vNodes);
             vNodes.push_back(pnode);
         }
-
-        pnode->nTimeConnected = GetTime();
 
         return pnode;
     } else if (!proxyConnectionFailed) {
@@ -2017,6 +2035,9 @@ void StartNode(boost::thread_group& threadGroup, CScheduler& scheduler)
     // Process messages
     threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "msghand", &ThreadMessageHandler));
 
+    // Process Masternode Connections
+    threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "mnbcon", &ThreadMnbRequestConnections));
+
     // Dump network addresses
     scheduler.scheduleEvery(&DumpAddresses, DUMP_ADDRESSES_INTERVAL);
 }
@@ -2295,7 +2316,7 @@ bool CAddrDB::Read(CAddrMan& addr)
 unsigned int ReceiveFloodSize() { return 1000*GetArg("-maxreceivebuffer", 5*1000); }
 unsigned int SendBufferSize() { return 1000*GetArg("-maxsendbuffer", 1*1000); }
 
-CNode::CNode(SOCKET hSocketIn, const CAddress& addrIn, const std::string& addrNameIn, bool fInboundIn) :
+CNode::CNode(SOCKET hSocketIn, const CAddress& addrIn, const std::string& addrNameIn, bool fInboundIn, bool fNetworkNodeIn) :
     ssSend(SER_NETWORK, INIT_PROTO_VERSION),
     addrKnown(5000, 0.001),
     setInventoryKnown(SendBufferSize() / 1000)
