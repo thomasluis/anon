@@ -2035,9 +2035,6 @@ void StartNode(boost::thread_group& threadGroup, CScheduler& scheduler)
     // Process messages
     threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "msghand", &ThreadMessageHandler));
 
-    // Process Masternode Connections
-    threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "mnbcon", &ThreadMnbRequestConnections));
-
     // Dump network addresses
     scheduler.scheduleEvery(&DumpAddresses, DUMP_ADDRESSES_INTERVAL);
 }
