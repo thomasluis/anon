@@ -191,11 +191,11 @@ void CMasternodeSync::SwitchToNextAsset()
     case (MASTERNODE_SYNC_FAILED):
         throw std::runtime_error("Can't switch to next asset from failed, should use Reset() first!");
         break;
-    // case (MASTERNODE_SYNC_INITIAL):
-    //     ClearFulfilledRequests();
-    //     nRequestedMasternodeAssets = MASTERNODE_SYNC_SPORKS;
-    //     LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
-    //     break;
+    case (MASTERNODE_SYNC_INITIAL):
+        ClearFulfilledRequests();
+        nRequestedMasternodeAssets = MASTERNODE_SYNC_LIST;
+        LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
+        break;
     // case (MASTERNODE_SYNC_SPORKS):
     //     nTimeLastMasternodeList = GetTime();
     //     nRequestedMasternodeAssets = MASTERNODE_SYNC_LIST;
@@ -310,18 +310,19 @@ void CMasternodeSync::ProcessTick()
             /*
                 Resync if we lost all masternodes from sleep/wake or failed to sync originally
             */
-            if (nMnCount == 0)
-            {
-                LogPrintf("CMasternodeSync::ProcessTick -- WARNING: not enough data, restarting sync\n");
-                Reset();
-            }
-            else
-            {
+            //    TEMPORARILY DISABLING THIS FUNCTIONALITY
+            // if (nMnCount == 0)
+            // {
+            //     LogPrintf("CMasternodeSync::ProcessTick -- WARNING: not enough data, restarting sync\n");
+            //     Reset();
+            // }
+            // else
+            // {
                 std::vector<CNode *> vNodesCopy = CopyNodeVector();
                 //governance.RequestGovernanceObjectVotes(vNodesCopy);
                 ReleaseNodeVector(vNodesCopy);
                 return;
-            }
+            // }
         }
 
         //try syncing again
@@ -350,8 +351,10 @@ void CMasternodeSync::ProcessTick()
         return;
     }
 
-    if (nRequestedMasternodeAssets == MASTERNODE_SYNC_INITIAL ||
-        (nRequestedMasternodeAssets == MASTERNODE_SYNC_SPORKS && IsBlockchainSynced()))
+    // Removing this because we will not be implementing SPORK feature
+    // if (nRequestedMasternodeAssets == MASTERNODE_SYNC_INITIAL ||
+    //     (nRequestedMasternodeAssets == MASTERNODE_SYNC_SPORKS && IsBlockchainSynced()))
+    if (nRequestedMasternodeAssets == MASTERNODE_SYNC_INITIAL && IsBlockchainSynced()) 
     {
         SwitchToNextAsset();
     }
