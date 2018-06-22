@@ -368,7 +368,7 @@ CNode* ConnectNode(CAddress addrConnect, const char* pszDest, bool fConnectToMas
     if (pszDest == NULL) {
         if (IsLocal(addrConnect) && !fConnectToMasternode)
             return NULL;
-
+        LOCK(cs_vNodes);
         // Look for an existing connection
         CNode* pnode = FindNode((CService)addrConnect);
         if (pnode) {
