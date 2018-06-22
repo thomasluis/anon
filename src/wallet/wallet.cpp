@@ -2496,6 +2496,7 @@ bool CWallet::GetVinAndKeysFromOutput(COutput out, CTxIn& txinRet, CPubKey& pubK
 
 bool CWallet::GetMasternodeVinAndKeys(CTxIn& txinRet, CPubKey& pubKeyRet, CKey& keyRet, std::string strTxHash, std::string strOutputIndex)
 {
+    strprintf("Could not allocate txin %s: for masternode %s", strTxHash, strOutputIndex);
     // wait for reindex and/or import to finish
     if (fImporting || fReindex) return false;
 
@@ -2507,6 +2508,7 @@ bool CWallet::GetMasternodeVinAndKeys(CTxIn& txinRet, CPubKey& pubKeyRet, CKey& 
         return false;
     }
 
+
     if(strTxHash.empty()) // No output specified, select the first one
         return GetVinAndKeysFromOutput(vPossibleCoins[0], txinRet, pubKeyRet, keyRet);
 
@@ -2514,11 +2516,24 @@ bool CWallet::GetMasternodeVinAndKeys(CTxIn& txinRet, CPubKey& pubKeyRet, CKey& 
     uint256 txHash = uint256S(strTxHash);
     int nOutputIndex = atoi(strOutputIndex.c_str());
 
-    BOOST_FOREACH(COutput& out, vPossibleCoins)
-        if(out.tx->GetHash() == txHash && out.i == nOutputIndex) // found it!
-            return GetVinAndKeysFromOutput(out, txinRet, pubKeyRet, keyRet);
+    BOOST_FOREACH(COutput& out, vPossibleCoins){
+            LogPrintf("==============================================");
+            LogPrintf("==============================================");
+            LogPrintf("==============================================");
+            LogPrintf("==============================================");
 
-    LogPrintf("CWallet::GetMasternodeVinAndKeys -- Could not locate specified masternode vin\n");
+            LogPrintf("out.tx->GetHash() == txHash STATEMENT %d \n", out.tx->GetHash() == txHash);
+            LogPrintf("out.i == nOutputIndex STATEMENT%d \n", out.i == nOutputIndex);
+            LogPrintf("out.i ======%d \n", out.i);
+            LogPrintf("nOutputIndex===== %d \n", nOutputIndex);
+
+            if (out.tx->GetHash() == txHash && out.i == nOutputIndex) { // found it!
+                LogPrintf("EVALUATES TRUE ----> FOUND THE VIN %d \n", strOutputIndex);
+                return GetVinAndKeysFromOutput(out, txinRet, pubKeyRet, keyRet);
+            }
+    }
+
+    LogPrintf("CWallet::GetMasternodeVinAndKeys -- Could not locate specified masternode vin THIS IS THE SECOND TIME\n");
     return false;
 }
 
