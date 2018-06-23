@@ -601,7 +601,10 @@ public:
 class CWallet : public CCryptoKeyStore, public CValidationInterface
 {
 private:
-    bool SelectCoins(const CAmount& nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, CAmount& nValueRet, bool& fOnlyCoinbaseCoinsRet, bool& fNeedCoinbaseCoinsRet, const CCoinControl *coinControl = NULL) const;
+    // BTCP
+    bool SelectCoins(const CAmount& nTargetValue, std::set<std::pair<const CWalletTx*, unsigned int>>& setCoinsRet, CAmount& nValueRet, bool& fOnlyCoinbaseCoinsRet, bool& fNeedCoinbaseCoinsRet, const CCoinControl* coinControl = NULL, AvailableCoinsType nCoinType = ALL_COINS) const;
+    // DASH
+    // bool SelectCoins(const CAmount& nTargetValue, std::set<std::pair<const CWalletTx*, unsigned int>>& setCoinsRet, CAmount& nValueRet, const CCoinControl* coinControl = NULL, AvailableCoinsType nCoinType = ALL_COINS) const;
 
     CWalletDB *pwalletdbEncryption;
 
@@ -941,8 +944,7 @@ public:
     CAmount GetUnconfirmedWatchOnlyBalance() const;
     CAmount GetImmatureWatchOnlyBalance() const;
     bool FundTransaction(CMutableTransaction& tx, CAmount& nFeeRet, int& nChangePosRet, std::string& strFailReason);
-    bool CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, int& nChangePosRet,
-                           std::string& strFailReason, const CCoinControl *coinControl = NULL, bool sign = true);
+    bool CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, int& nChangePosRet, std::string& strFailReason, const CCoinControl* coinControl = NULL, bool sign = true, AvailableCoinsType nCoinType = ALL_COINS);
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
 
     static CFeeRate minTxFee;

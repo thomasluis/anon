@@ -2197,29 +2197,26 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
         LOCK2(cs_main, cs_wallet);
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
         {
-            LogPrintf("=========================== BEGNINNING OF FIRST STUPID FUCKING AVAILABLE COINS LOOP ===========================");
-            LogPrintf("==============================================");
             const uint256& wtxid = it->first;
             const CWalletTx* pcoin = &(*it).second;
 
-            // if (!CheckFinalTx(*pcoin))
-            //     continue;
+            if (!CheckFinalTx(*pcoin))
+                continue;
 
-            // if (fOnlyConfirmed && !pcoin->IsTrusted())
-            //     continue;
+            if (fOnlyConfirmed && !pcoin->IsTrusted())
+                continue;
 
-            // if (pcoin->IsCoinBase() && !isForkBlock(pcoin->GetHeightInMainChain()) && !fIncludeCoinBase)
-            //     continue;
+            if (pcoin->IsCoinBase() && !isForkBlock(pcoin->GetHeightInMainChain()) && !fIncludeCoinBase)
+                continue;
 
-            // if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
-            //     continue;
+            if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
+                continue;
 
             int nDepth = pcoin->GetDepthInMainChain();
-            // if (nDepth < 0)
-            //     continue;
+            if (nDepth < 0)
+                continue;
 
             for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
-                LogPrintf(" BEGNINNING OF SECOND FUCKING AVAILABLE COINS LOOP ");
                 // DECLARE FOUND TO 0
                 bool found = false;
                 // IF COINS 
@@ -2242,16 +2239,13 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 // } 
                 // WHEN WE ARE LOOKING FOR OUTPUTS THAT EQUAL EXACTLY 100 COIN
                 if (nCoinType == ONLY_1000) {
-                    LogPrintf(" INSIDE OF nCoinType == ONLY_1000 ");
                     found = pcoin->vout[i].nValue == 100 * COIN;
                 } 
                 // WHEN WE DONT FIND 
                 else {
-                    LogPrintf(" INSIDE OF ELSE (FOUND=TRUE)");
                     found = true;
                 }
                 if (!found){
-                    LogPrintf(" INSIDE OF IF (!FOUND) ");
                     continue;
                 }
                 // isminetype mine = IsMine(pcoin->vout[i]);
@@ -2290,7 +2284,6 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                     //        || coinControl->IsSelected((*it).first, i)))
 
                     //IF ALL THIS CRAP ABOVE = TRUE DO THIS
-                    LogPrintf(" INSIDE OF vCoins.push_back ");
                     vCoins.push_back(COutput(pcoin, i, nDepth,
                                              (mine & ISMINE_SPENDABLE) != ISMINE_NO));
             }
@@ -2453,7 +2446,7 @@ bool CWallet::SelectCoinsMinConf(const CAmount& nTargetValue, int nConfMine, int
     return true;
 }
 
-bool CWallet::SelectCoins(const CAmount& nTargetValue, set<pair<const CWalletTx*,unsigned int> >& setCoinsRet, CAmount& nValueRet,  bool& fOnlyCoinbaseCoinsRet, bool& fNeedCoinbaseCoinsRet, const CCoinControl* coinControl) const
+bool CWallet::SelectCoins(const CAmount& nTargetValue, set<pair<const CWalletTx*, unsigned int>>& setCoinsRet, CAmount& nValueRet, bool& fOnlyCoinbaseCoinsRet, bool& fNeedCoinbaseCoinsRet, const CCoinControl* coinControl, AvailableCoinsType nCoinType) const
 {
     // Output parameter fOnlyCoinbaseCoinsRet is set to true when the only available coins are coinbase utxos.
     vector<COutput> vCoinsNoCoinbase, vCoinsWithCoinbase;
@@ -2596,16 +2589,6 @@ bool CWallet::GetMasternodeVinAndKeys(CTxIn& txinRet, CPubKey& pubKeyRet, CKey& 
     int nOutputIndex = atoi(strOutputIndex.c_str());
 
     BOOST_FOREACH(COutput& out, vPossibleCoins){
-            LogPrintf("==============================================");
-            LogPrintf("==============================================");
-            LogPrintf("==============================================");
-            LogPrintf("==============================================");
-
-            LogPrintf("out.tx->GetHash() == txHash STATEMENT %d \n", out.tx->GetHash() == txHash);
-            LogPrintf("out.i == nOutputIndex STATEMENT%d \n", out.i == nOutputIndex);
-            LogPrintf("out.i ======%d \n", out.i);
-            LogPrintf("nOutputIndex===== %d \n", nOutputIndex);
-
             if (out.tx->GetHash() == txHash && out.i == nOutputIndex) { // found it!
                 LogPrintf("EVALUATES TRUE ----> FOUND THE VIN %d \n", strOutputIndex);
                 return GetVinAndKeysFromOutput(out, txinRet, pubKeyRet, keyRet);
@@ -2660,8 +2643,7 @@ bool CWallet::FundTransaction(CMutableTransaction& tx, CAmount &nFeeRet, int& nC
     return true;
 }
 
-bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet,
-                                int& nChangePosRet, std::string& strFailReason, const CCoinControl* coinControl, bool sign)
+bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, int& nChangePosRet, std::string& strFailReason, const CCoinControl* coinControl, bool sign, AvailableCoinsType nCoinType)
 {
     CAmount nValue = 0;
     unsigned int nSubtractFeeFromAmount = 0;
