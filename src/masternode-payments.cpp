@@ -238,7 +238,7 @@ CCriticalSection cs_mapMasternodePaymentVotes;
 //     return true;
 // }
 
-void FillBlockPayments(CMutableTransaction &txNew, int nBlockHeight, CAmount blockReward, CTxOut &txoutMasternodeRet, std::vector<CTxOut> &voutSuperblockRet)
+void FillBlockPayments(CMutableTransaction &txNew, int nBlockHeight, CAmount blockReward, CTxOut &txoutMasternodeRet)
 {
     // only create superblocks if spork is enabled AND if superblock is actually triggered
     // (height should be validated inside)
