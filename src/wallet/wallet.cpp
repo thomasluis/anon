@@ -2217,84 +2217,62 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 continue;
 
             for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
+
+                // MASTERNODE SPECIFIC QUERY
+                // ************************
                 // DECLARE FOUND TO 0
                 bool found = false;
-                // IF COINS 
+                // #1 Condition
                 // if (nCoinType == ONLY_DENOMINATED) {
-                    // found = IsDenominatedAmount(pcoin->vout[i].nValue);
-                // } 
+                //     found = IsDenominatedAmount(pcoin->vout[i].nValue);
+                // }
+                // #2 Condition
                 // IF NODE IS MASTERNODE AND OUTPUTS DO NOT EQUAL EXACTLY 1000 COIN
-                // else if (nCoinType == ONLY_NOT1000IFMN) {
-                //     found = !(fMasterNode && pcoin->vout[i].nValue == 1000 * COIN);} 
-                // 
+                if (nCoinType == ONLY_NOT1000IFMN) {
+                    found = !(fMasterNode && pcoin->vout[i].nValue == 10 * COIN);}
+                // #3 Condition
                 // IF NODE IS MASTERNODE AND OUTPUTS DO NOT EQUAL EXACTLY 1000 COIN
-                // else if (nCoinType == ONLY_NONDENOMINATED_NOT1000IFMN) {
-                //     if (IsCollateralAmount(pcoin->vout[i].nValue)) {
-                //         continue; // do not use collateral amounts
-                //     }
-                //     found = !IsDenominatedAmount(pcoin->vout[i].nValue);
-                //     if (found && fMasterNode) {
-                //         found = pcoin->vout[i].nValue != 1000 * COIN; // do not use Hot MN funds
-                //     }
-                // } 
+                else if (nCoinType == ONLY_NONDENOMINATED_NOT1000IFMN) {
+                    // #3.1 Condition
+                    // if (IsCollateralAmount(pcoin->vout[i].nValue)) {
+                    //     continue; // do not use collateral amounts
+                    // }
+                    // found = !IsDenominatedAmount(pcoin->vout[i].nValue);
+                    // #3.2 Condition
+                    if (found && fMasterNode) {
+                        found = pcoin->vout[i].nValue != 10 * COIN; // do not use Hot MN funds
+                    }
+                }
+                // #4 Condition
                 // WHEN WE ARE LOOKING FOR OUTPUTS THAT EQUAL EXACTLY 100 COIN
                 if (nCoinType == ONLY_1000) {
-                    found = pcoin->vout[i].nValue == 100 * COIN;
-                } 
-                // WHEN WE DONT FIND 
+                    found = pcoin->vout[i].nValue == 10 * COIN;
+                }
+                // #5 Condition
+                // WHEN WE DONT FIND
                 else {
                     found = true;
                 }
+                // #CLEAR
                 if (!found){
                     continue;
                 }
-                // isminetype mine = IsMine(pcoin->vout[i]);
-                // if (!(IsSpent(wtxid, i)) && mine != ISMINE_NO &&
-                //     (!IsLockedCoin((*it).first, i) || nCoinType == ONLY_1000) &&
-                //     (pcoin->vout[i].nValue > 0 || fIncludeZeroValue) &&
-                //     (!coinControl || !coinControl->HasSelected() || coinControl->fAllowOtherInputs || coinControl->IsSelected((*it).first, i)))
+                // MASTERNODE SPECIFIC QUERY
+                // ************************
                 isminetype mine = IsMine(pcoin->vout[i]);
                 if (
-                    true)
-                    // #1 CONDITION
-                    // !(IsSpent(wtxid, i))
-                    // // #2 CONDITION
-                    // && mine != ISMINE_NO
-                    // // #3 CONDITION
-                    // && (
-                    //        // #3.1 CONDITION
-                    //        !IsLockedCoin((*it).first, i)
-                    //        // #3.2 CONDITION
-                    //        || nCoinType == ONLY_1000)
-                    // // #4 CONDITION
-                    // && (
-                    //        // #4.1 CONDITION
-                    //        pcoin->vout[i].nValue > 0
-                    //        // #4.2 CONDITION
-                    //        || fIncludeZeroValue)
-                    // // #5 CONDITION
-                    // && (
-                    //        // #5.1 CONDITION
-                    //        !coinControl
-                    //        // #5.2 CONDITION
-                    //        || !coinControl->HasSelected()
-                    //        // #5.3 CONDITION
-                    //        || coinControl->fAllowOtherInputs
-                    //        // #5.4 CONDITION
-                    //        || coinControl->IsSelected((*it).first, i)))
-
-                    //IF ALL THIS CRAP ABOVE = TRUE DO THIS
+                    !(IsSpent(wtxid, i))
+                    && mine != ISMINE_NO
+                    && (!IsLockedCoin((*it).first, i) || nCoinType == ONLY_1000)
+                    && (pcoin->vout[i].nValue > 0 || fIncludeZeroValue)
+                    && (!coinControl || !coinControl->HasSelected() || coinControl->fAllowOtherInputs || coinControl->IsSelected((*it).first, i)))
                     vCoins.push_back(COutput(pcoin, i, nDepth,
                                              (mine & ISMINE_SPENDABLE) != ISMINE_NO));
+                    // DASH
+                    // vCoins.push_back(COutput(pcoin, i, nDepth,
+                    //                         ((mine & ISMINE_SPENDABLE) != ISMINE_NO) ||
+                    //                             (coinControl && coinControl->fAllowWatchOnly && (mine & ISMINE_WATCH_SOLVABLE) != ISMINE_NO)));
             }
-
-            // for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
-            //     isminetype mine = IsMine(pcoin->vout[i]);
-            //     if (!(IsSpent(wtxid, i)) && mine != ISMINE_NO &&
-            //         !IsLockedCoin((*it).first, i) && (pcoin->vout[i].nValue > 0 || fIncludeZeroValue) &&
-            //         (!coinControl || !coinControl->HasSelected() || coinControl->fAllowOtherInputs || coinControl->IsSelected((*it).first, i)))
-            //             vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
-            // }
         }
     }
 }
