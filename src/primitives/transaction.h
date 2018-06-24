@@ -452,6 +452,9 @@ struct CMutableTransaction
      * fly, as opposed to GetHash() in CTransaction, which uses a cached result.
      */
     uint256 GetHash() const;
+
+    std::string ToString() const;
+
 };
 
 #endif // BITCOIN_PRIMITIVES_TRANSACTION_H

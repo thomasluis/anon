@@ -31,6 +31,8 @@
 #include "wallet/wallet.h"
 #endif
 
+#include "masternode-payments.h"
+#include "masternode-sync.h"
 #include "sodium.h"
 
 #include <boost/thread.hpp>
@@ -524,6 +526,10 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         nLastBlockTx = nBlockTx;
         nLastBlockSize = nBlockSize;
         LogPrintf("CreateNewBlock(): total size %u\n", nBlockSize);
+
+
+        // NOTE: unlike in bitcoin, we need to pass PREVIOUS block height here
+        CAmount blockReward = nFees + GetBlockSubsidy(pindexPrev->nHeight, chainparams.GetConsensus());
 
         // Create coinbase tx
         CMutableTransaction txNew;
