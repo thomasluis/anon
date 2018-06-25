@@ -538,7 +538,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 
 
         // NOTE: unlike in bitcoin, we need to pass PREVIOUS block height here
-        CAmount blockReward = nFees + GetBlockSubsidy(pindexPrev->nHeight, chainparams.GetConsensus());
+        CAmount blockReward = nFees + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
 
         // Compute regular coinbase transaction.
         txNew.vout[0].nValue = blockReward;
@@ -563,9 +563,10 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         // txNew.vin[0].scriptSig = CScript() << nHeight << OP_0;
 
         // Update block coinbase
+	LogPrintf("Before pblock txNew");
         pblock->vtx[0] = txNew;
+	LogPrintf("After pblock txNew");
         pblocktemplate->vTxFees[0] = -nFees;
-
         // Randomise nonce
         arith_uint256 nonce = UintToArith256(GetRandHash());
         // Clear the top and bottom 16 bits (for local use as thread flags and counters)
