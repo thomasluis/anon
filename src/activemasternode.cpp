@@ -210,7 +210,7 @@ void CActiveMasternode::ManageStateInitial()
         return;
     }
     LogPrintf("3");
-    if(pwalletMain->GetBalance() < 100*COIN) {
+    if(pwalletMain->GetBalance() < 10*COIN) {
         LogPrintf("CActiveMasternode::ManageStateInitial -- %s: Wallet balance is < 1000 DASH\n", GetStateString());
         return;
     }
@@ -233,6 +233,7 @@ void CActiveMasternode::ManageStateRemote()
              GetStatus(), fPingerEnabled, GetTypeString(), pubKeyMasternode.GetID().ToString());
 
     LogPrintf("pubkeyMasternode: %s\n", pubKeyMasternode.GetID().ToString());
+
     mnodeman.CheckMasternode(pubKeyMasternode);
     masternode_info_t infoMn = mnodeman.GetMasternodeInfo(pubKeyMasternode);
     if(infoMn.fInfoValid) {
