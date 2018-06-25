@@ -1,6 +1,9 @@
 // ***************************************************************
 //                         DASH
 // ***************************************************************
+// ***************************************************************
+//                         DASH
+// ***************************************************************
 isminetype mine = IsMine(pcoin->vout[i]);
 if (
     // #1 CONDITION
@@ -72,6 +75,9 @@ if (
         // #5.4 CONDITION
         || coinControl->IsSelected((*it).first, i))
     )
+
+
     //IF ALL THIS CRAP ABOVE = TRUE DO THIS  
-    vCoins.push_back(COutput(pcoin, i, nDepth, (mine & ISMINE_SPENDABLE) != ISMINE_NO));
+    vCoins.push_back(COutput(pcoin, i, nDepth, 
+    (mine & ISMINE_SPENDABLE) != ISMINE_NO));
 }
