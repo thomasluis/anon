@@ -908,8 +908,8 @@ bool operator==(const CNetAddr& a, const CNetAddr& b)
 
 bool operator!=(const CNetAddr& a, const CNetAddr& b)
 {   
-    LogPrintf("Ip a: %uc\n", a.ip);
-    LogPrintf("Ip b: %uc\n", b.ip);
+    LogPrintf("Ip a: %s\n", a.ToString());
+    LogPrintf("Ip b: %s\n", b.ToString());
     return (memcmp(a.ip, b.ip, 16) != 0);
 }
 

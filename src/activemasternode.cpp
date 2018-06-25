@@ -241,6 +241,8 @@ void CActiveMasternode::ManageStateRemote()
             LogPrintf("CActiveMasternode::ManageStateRemote -- %s: %s\n", GetStateString(), strNotCapableReason);
             return;
         }
+        LogPrintf("Service -- %s: %s\n", GetStateString(), strNotCapableReason);
+        LogPrintf("CActiveMasternode::ManageStateRemote -- %s: %s\n", GetStateString(), strNotCapableReason);
         if(service != infoMn.addr) {
             nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
             strNotCapableReason = "Broadcasted IP doesn't match our external address. Make sure you issued a new broadcast if IP of this masternode changed recently.";
