@@ -38,14 +38,14 @@
 #include "utilmoneystr.h"
 #include "validationinterface.h"
 #ifdef ENABLE_WALLET
+#include "wallet/wallet.h"
+#include "wallet/walletdb.h"
+#endif
 #include "masternode-payments.h"
 #include "masternode-sync.h"
 #include "masternodeconfig.h"
 #include "masternodeman.h"
 #include "netfulfilledman.h"
-#include "wallet/wallet.h"
-#include "wallet/walletdb.h"
-#endif
 #include <stdint.h>
 #include <stdio.h>
 
