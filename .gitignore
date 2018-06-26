@@ -122,8 +122,9 @@ contrib/debian/substvars
 *.gen
 
 
-btcp-cli.dSYM/*
-zcash-tx.dSYM/Contents/*
-zcash/CreateJoinSplit.dSYM/*
-zcash/GenerateParams.dSYM/*
-zcash-tx.dSYM/*
+**/btcp-cli.dSYM
+**/zcash-tx.dSYM
+**/zcash/CreateJioinSplit.dSYM
+**/zcash/GenerateParams.dSYM
+**/zcash-tx.dSYM
+**/zcash-gtest.dSYM
