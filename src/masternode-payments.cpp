@@ -1058,12 +1058,12 @@ std::string CMasternodePayments::ToString() const
     return info.str();
 }
 
-// bool CMasternodePayments::IsEnoughData()
-// {
-//     float nAverageVotes = (MNPAYMENTS_SIGNATURES_TOTAL + MNPAYMENTS_SIGNATURES_REQUIRED) / 2;
-//     int nStorageLimit = GetStorageLimit();
-//     return GetBlockCount() > nStorageLimit && GetVoteCount() > nStorageLimit * nAverageVotes;
-// }
+bool CMasternodePayments::IsEnoughData()
+{
+    float nAverageVotes = (MNPAYMENTS_SIGNATURES_TOTAL + MNPAYMENTS_SIGNATURES_REQUIRED) / 2;
+    int nStorageLimit = GetStorageLimit();
+    return GetBlockCount() > nStorageLimit && GetVoteCount() > nStorageLimit * nAverageVotes;
+}
 
 int CMasternodePayments::GetStorageLimit()
 {
