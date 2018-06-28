@@ -5,6 +5,7 @@
 #include "masternode-payments.h"
 #include "activemasternode.h"
 #include "masternode-sync.h"
+#include "darksend.h"
 #include "masternodeman.h"
 #include "netfulfilledman.h"
 #include "spork.h"
@@ -412,11 +413,11 @@ void CMasternodePayments::ProcessMessage(CNode *pfrom, std::string &strCommand, 
         }
 
         std::string strError = "";
-        // if (!vote.IsValid(pfrom, pCurrentBlockIndex->nHeight, strError))
-        // {
-        //     LogPrint("mnpayments", "MASTERNODEPAYMENTVOTE -- invalid message, error: %s\n", strError);
-        //     return;
-        // }
+        if (!vote.IsValid(pfrom, pCurrentBlockIndex->nHeight, strError))
+        {
+            LogPrint("mnpayments", "MASTERNODEPAYMENTVOTE -- invalid message, error: %s\n", strError);
+            return;
+        }
 
         if (!CanVote(vote.vinMasternode.prevout, vote.nBlockHeight))
         {
@@ -434,26 +435,26 @@ void CMasternodePayments::ProcessMessage(CNode *pfrom, std::string &strCommand, 
         }
 
         int nDos = 0;
-        // if (!vote.CheckSignature(mnInfo.pubKeyMasternode, pCurrentBlockIndex->nHeight, nDos))
-        // {
-        //     if (nDos)
-        //     {
-        //         LogPrintf("MASTERNODEPAYMENTVOTE -- ERROR: invalid signature\n");
-        //         Misbehaving(pfrom->GetId(), nDos);
-        //     }
-        //     else
-        //     {
-        //         // only warn about anything non-critical (i.e. nDos == 0) in debug mode
-        //         LogPrint("mnpayments", "MASTERNODEPAYMENTVOTE -- WARNING: invalid signature\n");
-        //     }
-        //     // Either our info or vote info could be outdated.
-        //     // In case our info is outdated, ask for an update,
-        //     mnodeman.AskForMN(pfrom, vote.vinMasternode);
-        //     // but there is nothing we can do if vote info itself is outdated
-        //     // (i.e. it was signed by a mn which changed its key),
-        //     // so just quit here.
-        //     return;
-        // }
+        if (!vote.CheckSignature(mnInfo.pubKeyMasternode, pCurrentBlockIndex->nHeight, nDos))
+        {
+            if (nDos)
+            {
+                LogPrintf("MASTERNODEPAYMENTVOTE -- ERROR: invalid signature\n");
+                Misbehaving(pfrom->GetId(), nDos);
+            }
+            else
+            {
+                // only warn about anything non-critical (i.e. nDos == 0) in debug mode
+                LogPrint("mnpayments", "MASTERNODEPAYMENTVOTE -- WARNING: invalid signature\n");
+            }
+            // Either our info or vote info could be outdated.
+            // In case our info is outdated, ask for an update,
+            mnodeman.AskForMN(pfrom, vote.vinMasternode);
+            // but there is nothing we can do if vote info itself is outdated
+            // (i.e. it was signed by a mn which changed its key),
+            // so just quit here.
+            return;
+        }
 
         CTxDestination address1;
         ExtractDestination(vote.payee, address1);
@@ -461,35 +462,35 @@ void CMasternodePayments::ProcessMessage(CNode *pfrom, std::string &strCommand, 
 
         LogPrint("mnpayments", "MASTERNODEPAYMENTVOTE -- vote: address=%s, nBlockHeight=%d, nHeight=%d, prevout=%s\n", address2.ToString(), vote.nBlockHeight, pCurrentBlockIndex->nHeight, vote.vinMasternode.prevout.ToStringShort());
 
-        // if (AddPaymentVote(vote))
-        // {
-        //     vote.Relay();
-        //     masternodeSync.AddedPaymentVote();
-        // }
+        if (AddPaymentVote(vote))
+        {
+            vote.Relay();
+            masternodeSync.AddedPaymentVote();
+        }
     }
 }
 
-// bool CMasternodePaymentVote::Sign()
-// {
-//     std::string strError;
-//     std::string strMessage = vinMasternode.prevout.ToStringShort() +
-//                              boost::lexical_cast<std::string>(nBlockHeight) +
-//                              ScriptToAsmStr(payee);
+bool CMasternodePaymentVote::Sign()
+{
+    std::string strError;
+    std::string strMessage = vinMasternode.prevout.ToStringShort() +
+                             boost::lexical_cast<std::string>(nBlockHeight) +
+                             ScriptToAsmStr(payee);
 
-//     if (!darkSendSigner.SignMessage(strMessage, vchSig, activeMasternode.keyMasternode))
-//     {
-//         LogPrintf("CMasternodePaymentVote::Sign -- SignMessage() failed\n");
-//         return false;
-//     }
+    if (!darkSendSigner.SignMessage(strMessage, vchSig, activeMasternode.keyMasternode))
+    {
+        LogPrintf("CMasternodePaymentVote::Sign -- SignMessage() failed\n");
+        return false;
+    }
 
-//     if (!darkSendSigner.VerifyMessage(activeMasternode.pubKeyMasternode, vchSig, strMessage, strError))
-//     {
-//         LogPrintf("CMasternodePaymentVote::Sign -- VerifyMessage() failed, error: %s\n", strError);
-//         return false;
-//     }
+    if (!darkSendSigner.VerifyMessage(activeMasternode.pubKeyMasternode, vchSig, strMessage, strError))
+    {
+        LogPrintf("CMasternodePaymentVote::Sign -- VerifyMessage() failed, error: %s\n", strError);
+        return false;
+    }
 
-//     return true;
-// }
+    return true;
+}
 
 bool CMasternodePayments::GetBlockPayee(int nBlockHeight, CScript &payee)
 {
@@ -531,11 +532,10 @@ bool CMasternodePayments::AddPaymentVote(const CMasternodePaymentVote &vote)
 {
     uint256 blockHash = uint256();
     if (!GetBlockHash(blockHash, vote.nBlockHeight - 10))
-    // if (!GetBlockHash())
             return false;
 
-    // if (HasVerifiedPaymentVote(vote.GetHash()))
-        // return false;
+    if (HasVerifiedPaymentVote(vote.GetHash()))
+        return false;
 
     LOCK2(cs_mapMasternodeBlocks, cs_mapMasternodePaymentVotes);
 
@@ -746,72 +746,72 @@ void CMasternodePayments::CheckAndRemove()
     LogPrintf("CMasternodePayments::CheckAndRemove -- %s\n", ToString());
 }
 
-// bool CMasternodePaymentVote::IsValid(CNode *pnode, int nValidationHeight, std::string &strError)
-// {
-//     CMasternode *pmn = mnodeman.Find(vinMasternode);
+bool CMasternodePaymentVote::IsValid(CNode *pnode, int nValidationHeight, std::string &strError)
+{
+    CMasternode *pmn = mnodeman.Find(vinMasternode);
 
-//     if (!pmn)
-//     {
-//         strError = strprintf("Unknown Masternode: prevout=%s", vinMasternode.prevout.ToStringShort());
-//         // Only ask if we are already synced and still have no idea about that Masternode
-//         if (masternodeSync.IsMasternodeListSynced())
-//         {
-//             mnodeman.AskForMN(pnode, vinMasternode);
-//         }
+    if (!pmn)
+    {
+        strError = strprintf("Unknown Masternode: prevout=%s", vinMasternode.prevout.ToStringShort());
+        // Only ask if we are already synced and still have no idea about that Masternode
+        if (masternodeSync.IsMasternodeListSynced())
+        {
+            mnodeman.AskForMN(pnode, vinMasternode);
+        }
 
-//         return false;
-//     }
+        return false;
+    }
 
-//     int nMinRequiredProtocol;
-//     if (nBlockHeight >= nValidationHeight)
-//     {
-//         // new votes must comply SPORK_10_MASTERNODE_PAY_UPDATED_NODES rules
-//         nMinRequiredProtocol = mnpayments.GetMinMasternodePaymentsProto();
-//     }
-//     else
-//     {
-//         // allow non-updated masternodes for old blocks
-//         nMinRequiredProtocol = MIN_MASTERNODE_PAYMENT_PROTO_VERSION_1;
-//     }
+    int nMinRequiredProtocol;
+    if (nBlockHeight >= nValidationHeight)
+    {
+        // new votes must comply SPORK_10_MASTERNODE_PAY_UPDATED_NODES rules
+        nMinRequiredProtocol = mnpayments.GetMinMasternodePaymentsProto();
+    }
+    else
+    {
+        // allow non-updated masternodes for old blocks
+        nMinRequiredProtocol = MIN_MASTERNODE_PAYMENT_PROTO_VERSION_1;
+    }
 
-//     if (pmn->nProtocolVersion < nMinRequiredProtocol)
-//     {
-//         strError = strprintf("Masternode protocol is too old: nProtocolVersion=%d, nMinRequiredProtocol=%d", pmn->nProtocolVersion, nMinRequiredProtocol);
-//         return false;
-//     }
+    if (pmn->nProtocolVersion < nMinRequiredProtocol)
+    {
+        strError = strprintf("Masternode protocol is too old: nProtocolVersion=%d, nMinRequiredProtocol=%d", pmn->nProtocolVersion, nMinRequiredProtocol);
+        return false;
+    }
 
-//     // Only masternodes should try to check masternode rank for old votes - they need to pick the right winner for future blocks.
-//     // Regular clients (miners included) need to verify masternode rank for future block votes only.
-//     if (!fMasterNode && nBlockHeight < nValidationHeight)
-//         return true;
+    // Only masternodes should try to check masternode rank for old votes - they need to pick the right winner for future blocks.
+    // Regular clients (miners included) need to verify masternode rank for future block votes only.
+    if (!fMasterNode && nBlockHeight < nValidationHeight)
+        return true;
 
-//     int nRank = mnodeman.GetMasternodeRank(vinMasternode, nBlockHeight - 101, nMinRequiredProtocol, false);
+    int nRank = mnodeman.GetMasternodeRank(vinMasternode, nBlockHeight - 101, nMinRequiredProtocol, false);
 
-//     if (nRank == -1)
-//     {
-//         LogPrint("mnpayments", "CMasternodePaymentVote::IsValid -- Can't calculate rank for masternode %s\n",
-//                  vinMasternode.prevout.ToStringShort());
-//         return false;
-//     }
+    if (nRank == -1)
+    {
+        LogPrint("mnpayments", "CMasternodePaymentVote::IsValid -- Can't calculate rank for masternode %s\n",
+                 vinMasternode.prevout.ToStringShort());
+        return false;
+    }
 
-//     if (nRank > MNPAYMENTS_SIGNATURES_TOTAL)
-//     {
-//         // It's common to have masternodes mistakenly think they are in the top 10
-//         // We don't want to print all of these messages in normal mode, debug mode should print though
-//         strError = strprintf("Masternode is not in the top %d (%d)", MNPAYMENTS_SIGNATURES_TOTAL, nRank);
-//         // Only ban for new mnw which is out of bounds, for old mnw MN list itself might be way too much off
-//         if (nRank > MNPAYMENTS_SIGNATURES_TOTAL * 2 && nBlockHeight > nValidationHeight)
-//         {
-//             strError = strprintf("Masternode is not in the top %d (%d)", MNPAYMENTS_SIGNATURES_TOTAL * 2, nRank);
-//             LogPrintf("CMasternodePaymentVote::IsValid -- Error: %s\n", strError);
-//             Misbehaving(pnode->GetId(), 20);
-//         }
-//         // Still invalid however
-//         return false;
-//     }
+    if (nRank > MNPAYMENTS_SIGNATURES_TOTAL)
+    {
+        // It's common to have masternodes mistakenly think they are in the top 10
+        // We don't want to print all of these messages in normal mode, debug mode should print though
+        strError = strprintf("Masternode is not in the top %d (%d)", MNPAYMENTS_SIGNATURES_TOTAL, nRank);
+        // Only ban for new mnw which is out of bounds, for old mnw MN list itself might be way too much off
+        if (nRank > MNPAYMENTS_SIGNATURES_TOTAL * 2 && nBlockHeight > nValidationHeight)
+        {
+            strError = strprintf("Masternode is not in the top %d (%d)", MNPAYMENTS_SIGNATURES_TOTAL * 2, nRank);
+            LogPrintf("CMasternodePaymentVote::IsValid -- Error: %s\n", strError);
+            Misbehaving(pnode->GetId(), 20);
+        }
+        // Still invalid however
+        return false;
+    }
 
-//     return true;
-// }
+    return true;
+}
 
 bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 {
@@ -859,7 +859,7 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 
     CScript payee = GetScriptForDestination(pmn->pubKeyCollateralAddress.GetID());
 
-    // CMasternodePaymentVote voteNew(activeMasternode.vin, nBlockHeight, payee);
+    CMasternodePaymentVote voteNew(activeMasternode.vin, nBlockHeight, payee);
 
     CTxDestination address1;
     ExtractDestination(payee, address1);
@@ -869,17 +869,17 @@ bool CMasternodePayments::ProcessBlock(int nBlockHeight)
 
     // SIGN MESSAGE TO NETWORK WITH OUR MASTERNODE KEYS
 
-    // LogPrintf("CMasternodePayments::ProcessBlock -- Signing vote\n");
-    // if (voteNew.Sign())
-    // {
-    //     LogPrintf("CMasternodePayments::ProcessBlock -- AddPaymentVote()\n");
+    LogPrintf("CMasternodePayments::ProcessBlock -- Signing vote\n");
+    if (voteNew.Sign())
+    {
+        LogPrintf("CMasternodePayments::ProcessBlock -- AddPaymentVote()\n");
 
-    //     if (AddPaymentVote(voteNew))
-    //     {
-    //         voteNew.Relay();
-    //         return true;
-    //     }
-    // }
+        if (AddPaymentVote(voteNew))
+        {
+            voteNew.Relay();
+            return true;
+        }
+    }
 
     return false;
 }
@@ -893,39 +893,39 @@ void CMasternodePaymentVote::Relay()
     RelayInv(inv);
 }
 
-// bool CMasternodePaymentVote::CheckSignature(const CPubKey &pubKeyMasternode, int nValidationHeight, int &nDos)
-// {
-//     // do not ban by default
-//     nDos = 0;
+bool CMasternodePaymentVote::CheckSignature(const CPubKey &pubKeyMasternode, int nValidationHeight, int &nDos)
+{
+    // do not ban by default
+    nDos = 0;
 
-//     std::string strMessage = vinMasternode.prevout.ToStringShort() +
-//                              boost::lexical_cast<std::string>(nBlockHeight) +
-//                              ScriptToAsmStr(payee);
+    std::string strMessage = vinMasternode.prevout.ToStringShort() +
+                             boost::lexical_cast<std::string>(nBlockHeight) +
+                             ScriptToAsmStr(payee);
 
-//     std::string strError = "";
-//     if (!darkSendSigner.VerifyMessage(pubKeyMasternode, vchSig, strMessage, strError))
-//     {
-//         // Only ban for future block vote when we are already synced.
-//         // Otherwise it could be the case when MN which signed this vote is using another key now
-//         // and we have no idea about the old one.
-//         if (masternodeSync.IsMasternodeListSynced() && nBlockHeight > nValidationHeight)
-//         {
-//             nDos = 20;
-//         }
-//         return error("CMasternodePaymentVote::CheckSignature -- Got bad Masternode payment signature, masternode=%s, error: %s", vinMasternode.prevout.ToStringShort().c_str(), strError);
-//     }
+    std::string strError = "";
+    if (!darkSendSigner.VerifyMessage(pubKeyMasternode, vchSig, strMessage, strError))
+    {
+        // Only ban for future block vote when we are already synced.
+        // Otherwise it could be the case when MN which signed this vote is using another key now
+        // and we have no idea about the old one.
+        if (masternodeSync.IsMasternodeListSynced() && nBlockHeight > nValidationHeight)
+        {
+            nDos = 20;
+        }
+        return error("CMasternodePaymentVote::CheckSignature -- Got bad Masternode payment signature, masternode=%s, error: %s", vinMasternode.prevout.ToStringShort().c_str(), strError);
+    }
 
-//     return true;
-// }
+    return true;
+}
 
-// std::string CMasternodePaymentVote::ToString() const
-// {
-//     std::ostringstream info;
+std::string CMasternodePaymentVote::ToString() const
+{
+    std::ostringstream info;
 
-//     info << vinMasternode.prevout.ToStringShort() << ", " << nBlockHeight << ", " << ScriptToAsmStr(payee) << ", " << (int)vchSig.size();
+    info << vinMasternode.prevout.ToStringShort() << ", " << nBlockHeight << ", " << ScriptToAsmStr(payee) << ", " << (int)vchSig.size();
 
-//     return info.str();
-// }
+    return info.str();
+}
 
 // Send only votes for future blocks, node should request every other missing payment block individually
 void CMasternodePayments::Sync(CNode *pnode)
