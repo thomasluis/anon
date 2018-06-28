@@ -193,15 +193,16 @@ void CMasternodeSync::SwitchToNextAsset()
         break;
     case (MASTERNODE_SYNC_INITIAL):
         ClearFulfilledRequests();
-        //     nTimeLastMasternodzeList = GetTime();
-            nRequestedMasternodeAssets = MASTERNODE_SYNC_LIST;
-            LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
-            break;
+            // nTimeLastMasternodzeList = GetTime();
+        nRequestedMasternodeAssets = MASTERNODE_SYNC_LIST;
+        LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
+        break;
         // case (MASTERNODE_SYNC_SPORKS):
         //     nRequestedMasternodeAssets = MASTERNODE_SYNC_LIST;
         //     LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
         //     break;
     case (MASTERNODE_SYNC_LIST):
+        nTimeLastMasternodeList = GetTime();
         nTimeLastPaymentVote = GetTime();
         // nRequestedMasternodeAssets = MASTERNODE_SYNC_MNW;
         // LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
@@ -211,6 +212,7 @@ void CMasternodeSync::SwitchToNextAsset()
         break;
     case (MASTERNODE_SYNC_MNW):
         // nTimeLastGovernanceItem = GetTime();
+        //nTimeLastMasternodeList = GetTime();
         nRequestedMasternodeAssets = MASTERNODE_SYNC_FINISHED;
         LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
         activeMasternode.ManageState();
