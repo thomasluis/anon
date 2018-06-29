@@ -475,6 +475,7 @@ UniValue masternodelist(const UniValue& params, bool fHelp)
                 arr.push_back((int64_t)mn.lastPing.sigTime);
                 arr.push_back((int64_t)(mn.lastPing.sigTime - mn.sigTime));
                 arr.push_back(mn.GetLastPaidTime());
+                arr.push_back(mn.GetLastPaidBlock());
                 arr.push_back(mn.addr.ToString());
 
                 // streamFull 
