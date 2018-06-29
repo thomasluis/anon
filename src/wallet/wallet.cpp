@@ -45,6 +45,8 @@ bool fPayAtLeastCustomFee = true;
  */
 CFeeRate CWallet::minTxFee = CFeeRate(1000);
 
+
+const uint256 CMerkleTx::ABANDON_HASH(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
 /** @defgroup mapWallet
  *
  * @{
@@ -3975,4 +3977,15 @@ CTxDestination CWallet::AddAndGetDestinationForScript(const CScript& script, Out
     default:
         assert(false);
     }
+}
+
+
+
+bool CWalletTx::InMempool() const
+{
+    LOCK(mempool.cs);
+    if (mempool.exists(GetHash())) {
+        return true;
+    }
+    return false;
 }
