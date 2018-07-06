@@ -25,8 +25,9 @@ class CGovernanceObject;
 class CGovernanceVote;
 
 extern CGovernanceManager governance;
-int nGovernanceFilterElements = 500;
+
 int nGovernanceMinQuorum = 1;
+int nGovernanceFilterElements = 5;
 typedef std::pair<CGovernanceObject, int64_t> object_time_pair_t;
 
 static const int RATE_BUFFER_SIZE = 5;
