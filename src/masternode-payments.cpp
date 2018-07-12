@@ -536,7 +536,7 @@ bool CMasternodePayments::AddPaymentVote(const CMasternodePaymentVote &vote)
 {
     LogPrintf("1\n");
     uint256 blockHash = uint256();
-    if (!GetBlockHash(blockHash, vote.nBlockHeight - 10))
+    if (!GetBlockHash(blockHash, vote.nBlockHeight - 101))
             return false;
     LogPrintf("2\n");
     if (HasVerifiedPaymentVote(vote.GetHash()))
