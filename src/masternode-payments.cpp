@@ -534,36 +534,35 @@ bool CMasternodePayments::IsScheduled(CMasternode &mn, int nNotBlockHeight)
 
 bool CMasternodePayments::AddPaymentVote(const CMasternodePaymentVote &vote)
 {
-    LogPrintf("1\n");
     uint256 blockHash = uint256();
-    if (!GetBlockHash(blockHash, vote.nBlockHeight - 101))
-            return false;
-    LogPrintf("2\n");
-    if (HasVerifiedPaymentVote(vote.GetHash()))
-        return false;
-    LogPrintf("3\n");
+    if (!GetBlockHash(blockHash, vote.nBlockHeight - 101)) return false;
+
+    uint256 nVoteHash = vote.GetHash();
+
+    if (HasVerifiedPaymentVote(nVoteHash)) return false;
+
     LOCK2(cs_mapMasternodeBlocks, cs_mapMasternodePaymentVotes);
-    LogPrintf("4\n");
-    mapMasternodePaymentVotes[vote.GetHash()] = vote;
-    LogPrintf("5\n");
+
+    mapMasternodePaymentVotes[nVoteHash] = vote;
+
     if (!mapMasternodeBlocks.count(vote.nBlockHeight))
     {
         CMasternodeBlockPayees blockPayees(vote.nBlockHeight);
         mapMasternodeBlocks[vote.nBlockHeight] = blockPayees;
     }
-    LogPrintf("6\n");
+
     mapMasternodeBlocks[vote.nBlockHeight].AddPayee(vote);
-    LogPrintf("7\n");
+
     return true;
 }
 
 bool CMasternodePayments::HasVerifiedPaymentVote(uint256 hashIn)
 {
-    LogPrintf("Inside CMasternodePayments::HasVerifiedPaymentVote #1 \n");
+
     LOCK(cs_mapMasternodePaymentVotes);
-    LogPrintf("Inside CMasternodePayments::HasVerifiedPaymentVote #2 \n");
+
     std::map<uint256, CMasternodePaymentVote>::iterator it = mapMasternodePaymentVotes.find(hashIn);
-    LogPrintf("Inside CMasternodePayments::HasVerifiedPaymentVote #3 \n");
+
     return it != mapMasternodePaymentVotes.end() && it->second.IsVerified();
 }
 
