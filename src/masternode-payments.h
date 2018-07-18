@@ -63,7 +63,7 @@ class CMasternodePayee
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream &s, Operation ser_action, int nType, int nVersion)
     {
-        READWRITE(*(CScriptBase *)(&scriptPubKey));
+        READWRITE(*(CScript *)(&scriptPubKey));
         READWRITE(vecVoteHashes);
     }
 
@@ -139,7 +139,7 @@ class CMasternodePaymentVote
     {
         READWRITE(vinMasternode);
         READWRITE(nBlockHeight);
-        READWRITE(*(CScriptBase *)(&payee));
+        READWRITE(*(CScript *)(&payee));
         READWRITE(vchSig);
     }
 
@@ -147,7 +147,7 @@ class CMasternodePaymentVote
     {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
         LogPrintf("Inside GetHash => payee: %s\n", payee.ToString());
-        ss << *(CScriptBase *)(&payee);
+        ss << *(CScript *)(&payee);
         ss << nBlockHeight;
         ss << vinMasternode.prevout;
         return ss.GetHash();
