@@ -365,24 +365,6 @@ CNode* FindNode(const CService& addr)
 
 CNode* ConnectNode(CAddress addrConnect, const char* pszDest, bool fConnectToMasternode)
 {
-    // if (pszDest == NULL) {
-    //     if (IsLocal(addrConnect) && !fConnectToMasternode)
-    //         return NULL;
-    //     LOCK(cs_vNodes);
-    //     // Look for an existing connection
-    //     CNode* pnode = FindNode((CService)addrConnect);
-    //     if (pnode) {
-    //         pnode->AddRef();
-    //         return pnode;
-    //     }
-    //     if (fConnectToMasternode && !pnode->fMasternode) {
-    //         pnode->AddRef();
-    //         pnode->fMasternode = true;
-    //     }
-
-    //     return pnode;
-    // }
-
     if (pszDest == NULL) {
         // we clean masternode connections in CMasternodeMan::ProcessMasternodeConnections()
         // so should be safe to skip this and connect to local Hot MN on CActiveMasternode::ManageState()

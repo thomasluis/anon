@@ -146,7 +146,6 @@ class CMasternodePaymentVote
     uint256 GetHash() const
     {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-        LogPrintf("Inside GetHash => payee: %s\n", payee.ToString());
         ss << *(CScript *)(&payee);
         ss << nBlockHeight;
         ss << vinMasternode.prevout;
