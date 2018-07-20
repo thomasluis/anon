@@ -405,16 +405,7 @@ CNode* ConnectNode(CAddress addrConnect, const char* pszDest, bool fConnectToMas
         addrman.Attempt(addrConnect);
 
         // Add node
-        // CNode* pnode = new CNode(hSocket, addrConnect, pszDest ? pszDest : "", false, true);
-        CNode* pnode = new CNode(hSocket, addrConnect, pszDest ? pszDest : "", false);
-        // pnode->AddRef();
-
-        // {
-        //     LOCK(cs_vNodes);
-        //     vNodes.push_back(pnode);
-        // }
-
-        // pnode->nTimeConnected = GetTime();
+        CNode* pnode = new CNode(hSocket, addrConnect, pszDest ? pszDest : "", false, true);
 
         pnode->nTimeConnected = GetTime();
         if (fConnectToMasternode) {
@@ -424,11 +415,8 @@ CNode* ConnectNode(CAddress addrConnect, const char* pszDest, bool fConnectToMas
             pnode->AddRef();
         }
 
-        // pnode->AddRef();
-        {
-            LOCK(cs_vNodes);
-            vNodes.push_back(pnode);
-        }
+        LOCK(cs_vNodes);
+        vNodes.push_back(pnode);
 
         return pnode;
     } else if (!proxyConnectionFailed) {
