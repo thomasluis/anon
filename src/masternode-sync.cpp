@@ -212,7 +212,6 @@ void CMasternodeSync::SwitchToNextAsset()
         break;
     case (MASTERNODE_SYNC_MNW):
         // nTimeLastGovernanceItem = GetTime();
-        //nTimeLastMasternodeList = GetTime();
         nRequestedMasternodeAssets = MASTERNODE_SYNC_FINISHED;
         LogPrintf("CMasternodeSync::SwitchToNextAsset -- Starting %s\n", GetAssetName());
         activeMasternode.ManageState();

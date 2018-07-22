@@ -33,7 +33,7 @@ UniValue masternode(const UniValue& params, bool fHelp)
         (strCommand != "start" && strCommand != "start-alias" && strCommand != "start-all" && strCommand != "start-missing" &&
          strCommand != "start-disabled" && strCommand != "list" && strCommand != "list-conf" && strCommand != "count" &&
          strCommand != "debug" && strCommand != "current" && strCommand != "winner" && strCommand != "winners" && strCommand != "genkey" &&
-         strCommand != "connect" && strCommand != "outputs" && strCommand != "status"))
+         strCommand != "connect" && strCommand != "outputs" && strCommand != "status" && strCommand != "mymasternodes"))
         throw std::runtime_error(
             "masternode \"command\"...\n"
             "Set of commands to execute masternode related actions\n"
@@ -289,6 +289,31 @@ UniValue masternode(const UniValue& params, bool fHelp)
         return resultObj;
     }
 
+    if (strCommand == "mymasternodes") {
+        UniValue alwaysEmptyArray(UniValue::VARR);
+        UniValue arr(UniValue::VARR);
+        UniValue wArr(UniValue::VARR);
+
+        BOOST_FOREACH (CMasternodeConfig::CMasternodeEntry mne, masternodeConfig.getEntries()) {
+            CTxIn vin = CTxIn(uint256S(mne.getTxHash()), uint32_t(atoi(mne.getOutputIndex().c_str())));
+            CMasternode* pmn = mnodeman.Find(vin);
+
+            std::string strStatus = pmn ? pmn->GetStatus() : "MISSING";
+
+            arr.push_back(mne.getAlias());
+            arr.push_back(mne.getIp());
+            arr.push_back(mne.getPrivKey());
+            arr.push_back(mne.getTxHash());
+            arr.push_back(mne.getOutputIndex());
+            arr.push_back(strStatus);
+
+            wArr.push_back(arr);
+            arr = alwaysEmptyArray;
+        }
+
+        return wArr;
+    }
+
     if (strCommand == "outputs") {
         // Find possible candidates
         std::vector<COutput> vPossibleCoins;
@@ -372,7 +397,7 @@ UniValue masternodelist(const UniValue& params, bool fHelp)
 
     if (fHelp || (strMode != "activeseconds" && strMode != "addr" && strMode != "full" &&
                   strMode != "lastseen" && strMode != "lastpaidtime" && strMode != "lastpaidblock" &&
-                  strMode != "protocol" && strMode != "payee" && strMode != "rank" && strMode != "status")) {
+                  strMode != "protocol" && strMode != "payee" && strMode != "rank" && strMode != "status" && strMode != "walletarray")) {
         throw std::runtime_error(
             "masternodelist ( \"mode\" \"filter\" )\n"
             "Get a list of masternodes in different modes\n"
@@ -400,6 +425,9 @@ UniValue masternodelist(const UniValue& params, bool fHelp)
     if (strMode == "full" || strMode == "lastpaidtime" || strMode == "lastpaidblock") {
         mnodeman.UpdateLastPaid();
     }
+    UniValue alwaysEmptyArr(UniValue::VARR);
+    UniValue arr(UniValue::VARR);
+    UniValue wArr(UniValue::VARR);
 
     UniValue obj(UniValue::VOBJ);
     if (strMode == "rank") {
@@ -462,15 +490,50 @@ UniValue masternodelist(const UniValue& params, bool fHelp)
                     strOutpoint.find(strFilter) == std::string::npos)
                     continue;
                 obj.push_back(Pair(strOutpoint, strStatus));
-            } else if (strMode == "pubkey") {
-                // CBitcoinAddress address(mn.pubKeyMasternode.GetID());
-                // std::string pubKeyMasternode = address.ToString();
-                if (strFilter != "" && strOutpoint.find(strFilter) == std::string::npos &&
-                    strOutpoint.find(strFilter) == std::string::npos)
-                    continue;
-                obj.push_back(Pair(strOutpoint, HexStr(mn.pubKeyMasternode)));
+            } else if (strMode == "walletarray") {
+                // std::ostringstream streamFull;
+
+                arr.push_back(strOutpoint);
+                arr.push_back(mn.GetStatus());
+                arr.push_back(mn.nProtocolVersion );
+                arr.push_back(CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString());
+                arr.push_back((int64_t)mn.lastPing.sigTime);
+                arr.push_back((int64_t)(mn.lastPing.sigTime - mn.sigTime));
+                arr.push_back(mn.GetLastPaidTime());
+                arr.push_back(mn.GetLastPaidBlock());
+                arr.push_back(mn.addr.ToString());
+
+                // streamFull 
+                // << mn.GetStatus() 
+                // << " " 
+                // << mn.nProtocolVersion 
+                // << " " 
+                // << CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString() 
+                // << " " 
+                // << (int64_t)mn.lastPing.sigTime 
+                // << " " 
+                // << (int64_t)(mn.lastPing.sigTime - mn.sigTime) 
+                // << " " 
+                // << mn.GetLastPaidTime() 
+                // << " " 
+                // << mn.GetLastPaidBlock() 
+                // << " " 
+                // << mn.addr.ToString();
+
+                // std::string strFull = streamFull.str();
+                // if (strFilter != "" && strFull.find(strFilter) == std::string::npos &&
+                //     strOutpoint.find(strFilter) == std::string::npos)
+                //     continue;
+                // obj.push_back(Pair(strOutpoint, strFull));
+                // std::cout << arr[0] << std::endl;
+               wArr.push_back(arr);
+               arr = alwaysEmptyArr;
+               
             }
         }
+    }
+    if(strMode == "walletarray") {
+        return wArr;
     }
     return obj;
 }

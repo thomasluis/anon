@@ -63,7 +63,7 @@ class CMasternodePayee
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream &s, Operation ser_action, int nType, int nVersion)
     {
-        READWRITE(*(CScriptBase *)(&scriptPubKey));
+        READWRITE(*(CScript *)(&scriptPubKey));
         READWRITE(vecVoteHashes);
     }
 
@@ -139,14 +139,14 @@ class CMasternodePaymentVote
     {
         READWRITE(vinMasternode);
         READWRITE(nBlockHeight);
-        READWRITE(*(CScriptBase *)(&payee));
+        READWRITE(*(CScript *)(&payee));
         READWRITE(vchSig);
     }
 
     uint256 GetHash() const
     {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-        ss << *(CScriptBase *)(&payee);
+        ss << *(CScript *)(&payee);
         ss << nBlockHeight;
         ss << vinMasternode.prevout;
         return ss.GetHash();
@@ -184,6 +184,8 @@ class CMasternodePayments
     std::map<uint256, CMasternodePaymentVote> mapMasternodePaymentVotes;
     std::map<int, CMasternodeBlockPayees> mapMasternodeBlocks;
     std::map<COutPoint, int> mapMasternodesLastVote;
+    std::map<COutPoint, int> mapMasternodesDidNotVote;
+
 
     CMasternodePayments() : nStorageCoeff(1.25), nMinBlocksToStore(5000) {}
 
@@ -205,6 +207,8 @@ class CMasternodePayments
     void Sync(CNode *node);
     void RequestLowDataPaymentBlocks(CNode *pnode);
     void CheckAndRemove();
+    void CheckPreviousBlockVotes(int nPrevBlockHeight);
+
 
     bool GetBlockPayee(int nBlockHeight, CScript &payee);
     bool IsTransactionValid(const CTransaction &txNew, int nBlockHeight);

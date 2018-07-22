@@ -683,6 +683,7 @@ CMasternode *CMasternodeMan::GetNextMasternodeInQueueForPayment(int nBlockHeight
     //  -- 1/100 payments should be a double payment on mainnet - (1/(3000/10))*2
     //  -- (chance per block * chances before IsScheduled will fire)
     int nTenthNetwork = nMnCount / 10;
+    //int nTenthNetwork = 10;
     int nCountTenth = 0;
     arith_uint256 nHighest = 0;
     BOOST_FOREACH (PAIRTYPE(int, CMasternode *) & s, vecMasternodeLastPaid)
@@ -832,6 +833,49 @@ std::vector<std::pair<int, CMasternode>> CMasternodeMan::GetMasternodeRanks(int 
     return vecMasternodeRanks;
 }
 
+
+bool CMasternodeMan::GetMasternodeRanks(CMasternodeMan::rank_pair_vec_t& vecMasternodeRanksRet, int nBlockHeight, int nMinProtocol)
+{
+    vecMasternodeRanksRet.clear();
+
+    if (!masternodeSync.IsMasternodeListSynced())
+        return false;
+
+    // make sure we know about this block
+    uint256 nBlockHash = uint256();
+    if (!GetBlockHash(nBlockHash, nBlockHeight)) {
+        LogPrintf("CMasternodeMan::%s -- ERROR: GetBlockHash() failed at nBlockHeight %d\n", __func__, nBlockHeight);
+        return false;
+    }
+
+    LOCK(cs);
+
+    score_pair_vec_t vecMasternodeScores;
+    // if (!GetMasternodeScores(nBlockHash, vecMasternodeScores, nMinProtocol))
+    //     return false;
+
+    // scan for winner
+    BOOST_FOREACH (CMasternode &mn, vMasternodes)
+    {
+
+        if (mn.nProtocolVersion < nMinProtocol || !mn.IsEnabled())
+            continue;
+
+        int64_t nScore = mn.CalculateScore(nBlockHash).GetCompact(false);
+
+        vecMasternodeScores.push_back(std::make_pair(nScore, &mn));
+    }
+
+    sort(vecMasternodeScores.rbegin(), vecMasternodeScores.rend(), CompareScoreMN());
+
+    int nRank = 0;
+    for (const auto& scorePair : vecMasternodeScores) {
+        nRank++;
+        vecMasternodeRanksRet.push_back(std::make_pair(nRank, *scorePair.second));
+    }
+
+    return true;
+}
 CMasternode *CMasternodeMan::GetMasternodeByRank(int nRank, int nBlockHeight, int nMinProtocol, bool fOnlyActive)
 {
     std::vector<std::pair<int64_t, CMasternode *>> vecMasternodeScores;
@@ -874,6 +918,29 @@ CMasternode *CMasternodeMan::GetMasternodeByRank(int nRank, int nBlockHeight, in
 
     return NULL;
 }
+
+// bool CMasternodeMan::GetMasternodeScores(const uint256& nBlockHash, CMasternodeMan::score_pair_vec_t& vecMasternodeScoresRet, int nMinProtocol)
+// {
+//     vecMasternodeScoresRet.clear();
+
+//     if (!masternodeSync.IsMasternodeListSynced())
+//         return false;
+
+//     AssertLockHeld(cs);
+
+//     if (mapMasternodes.empty())
+//         return false;
+
+//     // calculate scores
+//     for (const auto& mnpair : mapMasternodes) {
+//         if (mnpair.second.nProtocolVersion >= nMinProtocol) {
+//             vecMasternodeScoresRet.push_back(std::make_pair(mnpair.second.CalculateScore(nBlockHash), &mnpair.second));
+//         }
+//     }
+
+//     sort(vecMasternodeScoresRet.rbegin(), vecMasternodeScoresRet.rend(), CompareScoreMN());
+//     return !vecMasternodeScoresRet.empty();
+// }
 
 void CMasternodeMan::ProcessMasternodeConnections()
 {
@@ -1207,70 +1274,70 @@ void CMasternodeMan::DoFullVerificationStep()
 // with the same addr but none of them is verified yet, then none of them are banned.
 // It could take many times to run this before most of the duplicate nodes are banned.
 
-void CMasternodeMan::CheckSameAddr()
-{
-    if (!masternodeSync.IsSynced() || vMasternodes.empty())
-        return;
+// void CMasternodeMan::CheckSameAddr()
+// {
+//     if (!masternodeSync.IsSynced() || vMasternodes.empty())
+//         return;
 
-    std::vector<CMasternode *> vBan;
-    std::vector<CMasternode *> vSortedByAddr;
+//     std::vector<CMasternode *> vBan;
+//     std::vector<CMasternode *> vSortedByAddr;
 
-    {
-        LOCK(cs);
+//     {
+//         LOCK(cs);
 
-        CMasternode *pprevMasternode = NULL;
-        CMasternode *pverifiedMasternode = NULL;
+//         CMasternode *pprevMasternode = NULL;
+//         CMasternode *pverifiedMasternode = NULL;
 
-        BOOST_FOREACH (CMasternode &mn, vMasternodes)
-        {
-            vSortedByAddr.push_back(&mn);
-        }
+//         BOOST_FOREACH (CMasternode &mn, vMasternodes)
+//         {
+//             vSortedByAddr.push_back(&mn);
+//         }
 
-        sort(vSortedByAddr.begin(), vSortedByAddr.end(), CompareByAddr());
+//         sort(vSortedByAddr.begin(), vSortedByAddr.end(), CompareByAddr());
 
-        BOOST_FOREACH (CMasternode *pmn, vSortedByAddr)
-        {
-            // check only (pre)enabled masternodes
-            if (!pmn->IsEnabled() && !pmn->IsPreEnabled())
-                continue;
-            // initial step
-            if (!pprevMasternode)
-            {
-                pprevMasternode = pmn;
-                pverifiedMasternode = pmn->IsPoSeVerified() ? pmn : NULL;
-                continue;
-            }
-            // second+ step
-            if (pmn->addr == pprevMasternode->addr)
-            {
-                if (pverifiedMasternode)
-                {
-                    // another masternode with the same ip is verified, ban this one
-                    vBan.push_back(pmn);
-                }
-                else if (pmn->IsPoSeVerified())
-                {
-                    // this masternode with the same ip is verified, ban previous one
-                    vBan.push_back(pprevMasternode);
-                    // and keep a reference to be able to ban following masternodes with the same ip
-                    pverifiedMasternode = pmn;
-                }
-            }
-            else
-            {
-                pverifiedMasternode = pmn->IsPoSeVerified() ? pmn : NULL;
-            }
-            pprevMasternode = pmn;
-        }
-    }
+//         BOOST_FOREACH (CMasternode *pmn, vSortedByAddr)
+//         {
+//             // check only (pre)enabled masternodes
+//             if (!pmn->IsEnabled() && !pmn->IsPreEnabled())
+//                 continue;
+//             // initial step
+//             if (!pprevMasternode)
+//             {
+//                 pprevMasternode = pmn;
+//                 pverifiedMasternode = pmn->IsPoSeVerified() ? pmn : NULL;
+//                 continue;
+//             }
+//             // second+ step
+//             if (pmn->addr == pprevMasternode->addr)
+//             {
+//                 if (pverifiedMasternode)
+//                 {
+//                     // another masternode with the same ip is verified, ban this one
+//                     vBan.push_back(pmn);
+//                 }
+//                 else if (pmn->IsPoSeVerified())
+//                 {
+//                     // this masternode with the same ip is verified, ban previous one
+//                     vBan.push_back(pprevMasternode);
+//                     // and keep a reference to be able to ban following masternodes with the same ip
+//                     pverifiedMasternode = pmn;
+//                 }
+//             }
+//             else
+//             {
+//                 pverifiedMasternode = pmn->IsPoSeVerified() ? pmn : NULL;
+//             }
+//             pprevMasternode = pmn;
+//         }
+//     }
 
-    // ban duplicates
-    BOOST_FOREACH (CMasternode *pmn, vBan)
-    {
-        LogPrintf("CMasternodeMan::CheckSameAddr -- increasing PoSe ban score for masternode %s\n", pmn->vin.prevout.ToStringShort());
-        pmn->IncreasePoSeBanScore();
-    }
-}
+//     // ban duplicates
+//     BOOST_FOREACH (CMasternode *pmn, vBan)
+//     {
+//         LogPrintf("CMasternodeMan::CheckSameAddr -- increasing PoSe ban score for masternode %s\n", pmn->vin.prevout.ToStringShort());
+//         pmn->IncreasePoSeBanScore();
+//     }
+// }
 
 bool CMasternodeMan::SendVerifyRequest(const CAddress &addr, const std::vector<CMasternode *> &vSortedByAddr)
 {
@@ -1910,7 +1977,7 @@ void CMasternodeMan::UpdatedBlockTip(const CBlockIndex *pindex)
     pCurrentBlockIndex = pindex;
     LogPrint("masternode", "CMasternodeMan::UpdatedBlockTip -- pCurrentBlockIndex->nHeight=%d\n", pCurrentBlockIndex->nHeight);
 
-    CheckSameAddr();
+    // CheckSameAddr();
 
     if (fMasterNode)
     {
