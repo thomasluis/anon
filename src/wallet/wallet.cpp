@@ -3990,17 +3990,17 @@ bool CWalletTx::InMempool() const
     return false;
 }
 
-bool CWallet::GetBudgetSystemCollateralTX(CTransaction& tx, uint256 hash, CAmount amount, bool fUseInstantSend)
+bool CWallet::GetBudgetSystemCollateralTX(CTransaction& tx, uint256 hash, CAmount amount)
 {
     CWalletTx wtx;
-    if(GetBudgetSystemCollateralTX(wtx, hash, amount, fUseInstantSend)){
+    if(GetBudgetSystemCollateralTX(wtx, hash, amount)){
         tx = (CTransaction)wtx;
         return true;
     }
     return false;
 }
 
-bool CWallet::GetBudgetSystemCollateralTX(CWalletTx& tx, uint256 hash, CAmount amount, bool fUseInstantSend)
+bool CWallet::GetBudgetSystemCollateralTX(CWalletTx& tx, uint256 hash, CAmount amount)
 {
     // make our change address
     CReserveKey reservekey(this);
