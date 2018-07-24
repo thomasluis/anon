@@ -4006,7 +4006,7 @@ bool CWallet::GetBudgetSystemCollateralTX(CWalletTx& tx, uint256 hash, CAmount a
     // CReserveKey reservekey(this);
 
     CScript scriptChange;
-    // scriptChange << OP_RETURN << ToByteVector(hash);
+    scriptChange << OP_RETURN << ToByteVector(hash);
 
     // ALTERNATIVE APPROACH TO CHANGE 
     CPubKey vchPubKey;
