@@ -1,4 +1,3 @@
-// Copyright (c) 2014-2017 The Dash Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -603,8 +602,8 @@ void CMasternodeSync::UpdatedBlockTip(const CBlockIndex *pindex)
 void ThreadMasternodeInit()
 {
     if (fLiteMode) {
-        LogPrintf("Disabling all Dash specific functionality...\n");
-        return; // disable all Dash specific functionality
+        LogPrintf("Disabling all Anon specific functionality...\n");
+        return; // disable all Anon specific functionality
     }
         
 
