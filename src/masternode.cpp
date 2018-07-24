@@ -6,6 +6,7 @@
 #include "consensus/validation.h"
 #include "init.h"
 #include "darksend.h"
+#include "governance.h"
 #include "masternode.h"
 #include "masternode-payments.h"
 #include "masternode-sync.h"

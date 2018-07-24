@@ -315,7 +315,7 @@ void CMasternodeSync::ProcessTick()
             // else
             // {
                 std::vector<CNode *> vNodesCopy = CopyNodeVector();
-                //governance.RequestGovernanceObjectVotes(vNodesCopy);
+                governance.RequestGovernanceObjectVotes(vNodesCopy);
                 ReleaseNodeVector(vNodesCopy);
                 return;
             // }
@@ -649,7 +649,7 @@ void ThreadMasternodeInit()
             }
 
             if (nTick % (60 * 5) == 0) {
-                // governance.DoMaintenance();
+                governance.DoMaintenance();
             }
 
             // darkSendPool.CheckTimeout();

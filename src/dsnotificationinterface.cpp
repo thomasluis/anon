@@ -5,7 +5,7 @@
 #include "dsnotificationinterface.h"
 #include "darksend.h"
 // #include "instantx.h"
-// #include "governance.h"
+#include "governance.h"
 #include "masternodeman.h"
 #include "masternode-payments.h"
 #include "masternode-sync.h"
@@ -24,7 +24,7 @@ void CDSNotificationInterface::UpdatedBlockTip(const CBlockIndex *pindex)
     // darkSendPool.UpdatedBlockTip(pindex);
     // instantsend.UpdatedBlockTip(pindex);
     mnpayments.UpdatedBlockTip(pindex);
-    // governance.UpdatedBlockTip(pindex);
+    governance.UpdatedBlockTip(pindex);
     masternodeSync.UpdatedBlockTip(pindex);
 }
 

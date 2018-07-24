@@ -5,6 +5,7 @@
 #include "activemasternode.h"
 #include "addrman.h"
 #include "darksend.h"
+#include "governance.h"
 #include "masternode-payments.h"
 #include "masternode-sync.h"
 #include "masternodeman.h"
@@ -1997,15 +1998,15 @@ void CMasternodeMan::NotifyMasternodeUpdates()
         fMasternodesRemovedLocal = fMasternodesRemoved;
     }
 
-    // if (fMasternodesAddedLocal)
-    // {
-    //     governance.CheckMasternodeOrphanObjects();
-    //     governance.CheckMasternodeOrphanVotes();
-    // }
-    // if (fMasternodesRemovedLocal)
-    // {
-    //     governance.UpdateCachesAndClean();
-    // }
+    if (fMasternodesAddedLocal)
+    {
+        governance.CheckMasternodeOrphanObjects();
+        governance.CheckMasternodeOrphanVotes();
+    }
+    if (fMasternodesRemovedLocal)
+    {
+        governance.UpdateCachesAndClean();
+    }
 
     LOCK(cs);
     fMasternodesAdded = false;
