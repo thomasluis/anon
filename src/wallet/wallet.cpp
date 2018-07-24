@@ -4003,10 +4003,24 @@ bool CWallet::GetBudgetSystemCollateralTX(CTransaction& tx, uint256 hash, CAmoun
 bool CWallet::GetBudgetSystemCollateralTX(CWalletTx& tx, uint256 hash, CAmount amount)
 {
     // make our change address
-    CReserveKey reservekey(this);
+    // CReserveKey reservekey(this);
 
     CScript scriptChange;
-    scriptChange << OP_RETURN << ToByteVector(hash);
+    // scriptChange << OP_RETURN << ToByteVector(hash);
+
+    // ALTERNATIVE APPROACH TO CHANGE 
+    CPubKey vchPubKey;
+    CReserveKey reservekey(pwalletMain);
+    // bool reservekey;
+    // bool reservekey = reservekey.GetReservedKey(vchPubKey);
+    // assert(reservekey); // should never fail, as we just unlocked
+    if(!reservekey.GetReservedKey(vchPubKey)) {
+        // LogPrintf("Cannot reserve key: %s\n", strFail);
+        LogPrintf("Cannot reserve change address for change output: %s\n");
+        return false;
+    };
+
+    scriptChange = GetScriptForDestination(vchPubKey.GetID());
 
     CAmount nFeeRet = 0;
     int nChangePosRet = -1;
@@ -4016,6 +4030,8 @@ bool CWallet::GetBudgetSystemCollateralTX(CWalletTx& tx, uint256 hash, CAmount a
 
     CCoinControl *coinControl=NULL;
     bool success = CreateTransaction(vecSend, tx, reservekey, nFeeRet, nChangePosRet, strFail, coinControl, true, ALL_COINS);
+    // if (!pwalletMain->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError)) {
+    // bool CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, int& nChangePosRet, std::string& strFailReason, const CCoinControl* coinControl = NULL, bool sign = true, AvailableCoinsType nCoinType = ALL_COINS);
     if(!success){
         LogPrintf("CWallet::GetBudgetSystemCollateralTX -- Error: %s\n", strFail);
         return false;
