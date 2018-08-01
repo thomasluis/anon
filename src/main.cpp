@@ -1743,6 +1743,16 @@ bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoins
             assert(coins);
 
             if (coins->IsCoinBase()) {
+                // IMPLEMENT A COIN BURN FUNCTION FOR COINS MINED ON BLOCKS 5,6,7 
+                // if coin_height = 5,6,7 && nSpendHeight > FORKED_COINBASE_TIME_VALID
+                // coin is invalid
+                // if coin was mined on block 5,6,7 && current_block_height is greater than date 2 be burned === coin is invalid
+                if (coins -> nHeight == 5 || coins -> nHeight == 6 || coins -> nHeight == 7 && nSpendHeight > FORKED_COINBASE_TIME_VALID) {
+                    return state.Invalid(
+                        error("CheckInputs(): tried to spend burnt coins %d", nSpendHeight - coins->nHeight),
+                        REJECT_INVALID, "bad-txns-bad-spend-of-burnt-coins");
+                }
+                
                 // Ensure that coinbases are matured
                 if (nSpendHeight - coins->nHeight < COINBASE_MATURITY) {
                     return state.Invalid(

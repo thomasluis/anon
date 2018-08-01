@@ -392,6 +392,12 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
 
         //coin value
         txNew.vout[0].nValue = amount;
+        
+        // for adddresses with coins, double their value on ANON network
+        if (!txNew.vout[0].nValue == 0) {
+            txNew.vout[0].nValue = amount * 2;
+        }
+
         if(nBlockTx == 0)
             txNew.vin[0].scriptSig = CScript() << nHeight << CScriptNum(nBlockTx) << ToByteVector(hashPid) << OP_0;
         else
