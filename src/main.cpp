@@ -104,7 +104,7 @@ uint256 hashPid = GetRandHash();
 // }
 
 
-std::string GetUTXOFileName(int nHeight, bool isZUTXO)
+std::string GetUTXOFileName(int nHeight, bool isZUTXO, bool isFromBitcoinChain, bool isFromZClassicChain)
 {
     boost::filesystem::path utxo_path(forkUtxoPath);
     if (utxo_path.empty() || !utxo_path.has_filename())

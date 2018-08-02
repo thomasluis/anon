@@ -192,18 +192,6 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
 
 
     assert(nForkHeight >= 0);
-    //Here is the UTXO directory, which file we will read from
-    string utxo_file_path = GetUTXOFileName(nHeight);
-    LogPrintf("utxo_file_path: %s \n", utxo_file_path);
-    //Read from the specified UTXO file
-    std::ifstream if_utxo(utxo_file_path, std::ios::binary | std::ios::in);
-    if (!if_utxo.is_open()) {
-        bFileNotFound = true;
-        LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: Cannot open UTXO file - %s\n",
-                  nHeight, nForkHeight, forkHeightRange, utxo_file_path);
-        return NULL;
-    }
-
 
     // Create new block
     std::unique_ptr<CBlockTemplate> pblocktemplate(new CBlockTemplate());
@@ -221,7 +209,7 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
     uint64_t nBlockSigOps = 100;
     //while utxo files exists, and the number of tx in the block is less than set man (where is forkCBPerBlock)
 
-  // Add dummy coinbase tx as first transaction
+    // Add dummy coinbase tx as first transaction
     CMutableTransaction txCoinbase;
     txCoinbase.vin.resize(1);
     txCoinbase.vin[0].prevout.SetNull();
@@ -241,6 +229,20 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
     //START MINING Z-ADDRESSES
         if(nHeight > zUtxoMiningStartBlock && nHeight <= nForkHeight + nForkHeightRange){
             while (true) {  
+
+                // Initalize the utxo_file_path inside of the respective chain mine
+                //Here is the UTXO directory, which file we will read from
+                string utxo_file_path = GetUTXOFileName(nHeight);
+                LogPrintf("utxo_file_path: %s \n", utxo_file_path);
+                //Read from the specified UTXO file
+                std::ifstream if_utxo(utxo_file_path, std::ios::binary | std::ios::in);
+                if (!if_utxo.is_open()) {
+                    bFileNotFound = true;
+                    LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: Cannot open UTXO file - %s\n",
+                            nHeight, nForkHeight, forkHeightRange, utxo_file_path);
+                    return NULL;
+                }
+
                 //break if there are no more transactions in the file
                 if(if_utxo.eof()){
                     break;
@@ -335,102 +337,104 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
                 delete transSize;
                 delete rawTransaction;
             }
-    } else {
-
-        while (if_utxo && nBlockTx < forkCBPerBlock) {
-        char term = 0;
-////////////////////////Format checks, explore more when looking at UTXO raw
-        //Value
-        char coin[8] = {};
-        if (!if_utxo.read(coin, 8)) {
-            // the last file may be shorter than forkCBPerBlock
-            if(!if_utxo.eof() || nForkHeight != forkHeightRange)
-                LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? - No more data (Amount)\n",
-                          nHeight, nForkHeight, forkHeightRange);
-            break;
-        }
-        //public key
-        char pubkeysize[8] = {};
-        //cout this guy
-        if (!if_utxo.read(pubkeysize, 8)) {
-            LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? - Not more data (PubKeyScript size)\n",
-                      nHeight, nForkHeight, forkHeightRange);
-            break;
-        }
-        //convert to base 64
-        int pbsize = bytes2uint64(pubkeysize);
-        if (pbsize == 0) {
-            LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? -  PubKeyScript size = 0\n",
-                      nHeight, nForkHeight, forkHeightRange);
-            //but proceed
-        }
-        //Initialize array of characters that is the size of pubkey?
-        std::unique_ptr<char[]> pubKeyScript(new char[pbsize]);
-
-        if (!if_utxo.read(&pubKeyScript[0], pbsize)) {
-            LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? Not more data (PubKeyScript)\n",
-                      nHeight, nForkHeight, forkHeightRange);
-            break;
-        }
-////////////////////////////////////////////////////////////////////////
-
-        //Needs ut64 for files? Part of .bin?
-        uint64_t amount = bytes2uint64(coin);
-        LogPrintf("AMOUNT: %ull\n", amount);
-        //makes array into string
-        unsigned char* pks = (unsigned char*)pubKeyScript.get();
-
-        // Add coinbase tx's
-        CMutableTransaction txNew;
-        txNew.vin.resize(1);
-        //No input cuz coinbase
-        txNew.vin[0].prevout.SetNull();
-        //Just create
-        txNew.vout.resize(1);
-        txNew.vout[0].scriptPubKey = CScript(pks, pks+pbsize);
-
-        //coin value
-        txNew.vout[0].nValue = amount;
+    } 
+    //START MINING T-ADDRESSES
+    //TODO: SEPERATE LOGIC FOR HANDLING PRE-MINE OF BTC AND ZCLASSIC
+    else {
         
-        // for adddresses with coins, double their value on ANON network
-        if (!txNew.vout[0].nValue == 0) {
-            txNew.vout[0].nValue = amount * 2;
-        }
+        while (if_utxo && nBlockTx < forkCBPerBlock) {
+            char term = 0;
+            ////////////////////////Format checks, explore more when looking at UTXO raw
+            //Value
+            char coin[8] = {};
+            if (!if_utxo.read(coin, 8)) {
+                // the last file may be shorter than forkCBPerBlock
+                if(!if_utxo.eof() || nForkHeight != forkHeightRange)
+                    LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? - No more data (Amount)\n",
+                            nHeight, nForkHeight, forkHeightRange);
+                break;
+            }
+            //public key
+            char pubkeysize[8] = {};
+            //cout this guy
+            if (!if_utxo.read(pubkeysize, 8)) {
+                LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? - Not more data (PubKeyScript size)\n",
+                        nHeight, nForkHeight, forkHeightRange);
+                break;
+            }
+            //convert to base 64
+            int pbsize = bytes2uint64(pubkeysize);
+            if (pbsize == 0) {
+                LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? -  PubKeyScript size = 0\n",
+                        nHeight, nForkHeight, forkHeightRange);
+                //but proceed
+            }
+            //Initialize array of characters that is the size of pubkey?
+            std::unique_ptr<char[]> pubKeyScript(new char[pbsize]);
 
-        if(nBlockTx == 0)
-            txNew.vin[0].scriptSig = CScript() << nHeight << CScriptNum(nBlockTx) << ToByteVector(hashPid) << OP_0;
-        else
-            txNew.vin[0].scriptSig = CScript() << nHeight << CScriptNum(nBlockTx) << OP_0;
+            if (!if_utxo.read(&pubKeyScript[0], pbsize)) {
+                LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? Not more data (PubKeyScript)\n",
+                        nHeight, nForkHeight, forkHeightRange);
+                break;
+            }
+            ////////////////////////////////////////////////////////////////////////
+            //Needs ut64 for files? Part of .bin?
+            uint64_t amount = bytes2uint64(coin);
+            LogPrintf("AMOUNT: %ull\n", amount);
+            //makes array into string
+            unsigned char* pks = (unsigned char*)pubKeyScript.get();
 
-        unsigned int nTxSize = ::GetSerializeSize(txNew, SER_NETWORK, PROTOCOL_VERSION);
-        if (nBlockSize + nTxSize >= nBlockMaxSize)
-        {
-            LogPrintf("ERROR:  CreateNewForkBlock(): [%u, %u of %u]: %u: block would exceed max size\n",
-                      nHeight, nForkHeight, forkHeightRange, nBlockTx);
-            break;
-        }
+            // Add coinbase tx's
+            CMutableTransaction txNew;
+            txNew.vin.resize(1);
+            //No input cuz coinbase
+            txNew.vin[0].prevout.SetNull();
+            //Just create
+            txNew.vout.resize(1);
+            txNew.vout[0].scriptPubKey = CScript(pks, pks+pbsize);
 
-        // Legacy limits on sigOps:
-        unsigned int nTxSigOps = GetLegacySigOpCount(txNew);
-        if (nBlockSigOps + nTxSigOps >= MAX_BLOCK_SIGOPS)
-        {
-            LogPrintf("ERROR:  CreateNewForkBlock(): [%u, %u of %u]: %u: block would exceed max sigops\n",
-                      nHeight, nForkHeight, forkHeightRange, nBlockTx);
-            break;
-        }
+            //coin value
+            txNew.vout[0].nValue = amount;
+            
+            // for adddresses with coins, double their value on ANON network
+            if (!txNew.vout[0].nValue == 0) {
+                txNew.vout[0].nValue = amount * 2;
+            }
 
-        pblock->vtx.push_back(txNew);
-        pblocktemplate->vTxFees.push_back(0);
-        pblocktemplate->vTxSigOps.push_back(nTxSigOps);
-        nBlockSize += nTxSize;
-        nBlockSigOps += nTxSigOps;
-        nBlockTotalAmount += amount;
-        ++nBlockTx;
+            if(nBlockTx == 0)
+                txNew.vin[0].scriptSig = CScript() << nHeight << CScriptNum(nBlockTx) << ToByteVector(hashPid) << OP_0;
+            else
+                txNew.vin[0].scriptSig = CScript() << nHeight << CScriptNum(nBlockTx) << OP_0;
 
-        if (!if_utxo.read(&term, 1) || term != '\n') {
-            LogPrintf("ERROR:  CreateNewForkBlock(): [%u, %u of %u]: invalid record separator\n",
-                      nHeight, nForkHeight, forkHeightRange);
-            break;
+            unsigned int nTxSize = ::GetSerializeSize(txNew, SER_NETWORK, PROTOCOL_VERSION);
+            if (nBlockSize + nTxSize >= nBlockMaxSize)
+            {
+                LogPrintf("ERROR:  CreateNewForkBlock(): [%u, %u of %u]: %u: block would exceed max size\n",
+                        nHeight, nForkHeight, forkHeightRange, nBlockTx);
+                break;
+            }
+
+            // Legacy limits on sigOps:
+            unsigned int nTxSigOps = GetLegacySigOpCount(txNew);
+            if (nBlockSigOps + nTxSigOps >= MAX_BLOCK_SIGOPS)
+            {
+                LogPrintf("ERROR:  CreateNewForkBlock(): [%u, %u of %u]: %u: block would exceed max sigops\n",
+                        nHeight, nForkHeight, forkHeightRange, nBlockTx);
+                break;
+            }
+
+            pblock->vtx.push_back(txNew);
+            pblocktemplate->vTxFees.push_back(0);
+            pblocktemplate->vTxSigOps.push_back(nTxSigOps);
+            nBlockSize += nTxSize;
+            nBlockSigOps += nTxSigOps;
+            nBlockTotalAmount += amount;
+            ++nBlockTx;
+
+            if (!if_utxo.read(&term, 1) || term != '\n') {
+                LogPrintf("ERROR:  CreateNewForkBlock(): [%u, %u of %u]: invalid record separator\n",
+                        nHeight, nForkHeight, forkHeightRange);
+                break;
         }
     }
 

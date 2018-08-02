@@ -900,6 +900,8 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 
 #ifdef FORK_CB_INPUT
     auto default_data_dir = GetDataDir() / "utxo_snapshot";
+    auto default_bitcoin_data_dir = GetDataDir() / "bitcoin";
+    auto default_zclassic_data_dir = GetDataDir() / "zclassic";
     forkUtxoPath = GetArg("-utxo-path", default_data_dir.string());
     forkStartHeight = GetArg("-fork-startheight", chainparams.ForkStartHeight());
     forkHeightRange = GetArg("-fork-heightrange", chainparams.ForkHeightRange());
