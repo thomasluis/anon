@@ -1725,6 +1725,10 @@ int GetSpendHeight(const CCoinsViewCache& inputs)
 namespace Consensus {
 bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, const Consensus::Params& consensusParams)
 {
+        int64_t nForkStartHeight = consensusParams.nForkStartHeight;
+        int64_t nForkHeightRange = consensusParams.nForkHeightRange;
+        // const int Z_UTXO_MINING_START_BlOCK = chainparams.ZUtxoMiningStartBlock();
+        
         // This doesn't trigger the DoS code on purpose; if it did, it would make it easier
         // for an attacker to attempt to split the network.
         if (!inputs.HaveInputs(tx))
@@ -1746,8 +1750,12 @@ bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoins
                 // IMPLEMENT A COIN BURN FUNCTION FOR COINS MINED ON BLOCKS 5,6,7 
                 // if coin_height = 5,6,7 && nSpendHeight > FORKED_COINBASE_TIME_VALID
                 // coin is invalid
-                // if coin was mined on block 5,6,7 && current_block_height is greater than date 2 be burned === coin is invalid
-                if (coins -> nHeight == 5 || coins -> nHeight == 6 || coins -> nHeight == 7 && nSpendHeight > FORKED_COINBASE_TIME_VALID) {
+                // if coin was mined on block 5,6,7 && current_block_height is greater than block 2 be burned === coin is invalid
+                // if (coins -> nHeight == 5 || coins -> nHeight == 6 || coins -> nHeight == 7 && nSpendHeight > FORKED_COINBASE_TIME_VALID) {
+                // if coin was mined on block (block(nForkStartHeight)), dynamically calculate the range
+
+
+                if ((coins -> nHeight >= nForkStartHeight && coins -> nHeight <= (nForkStartHeight + nForkHeightRange) && (nSpendHeight > FORKED_COINBASE_TIME_VALID))) {
                     return state.Invalid(
                         error("CheckInputs(): tried to spend burnt coins %d", nSpendHeight - coins->nHeight),
                         REJECT_INVALID, "bad-txns-bad-spend-of-burnt-coins");

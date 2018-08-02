@@ -239,7 +239,7 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
     //START MINING Z-ADDRESSES
     // if (nHeight >= Z_UTXO_MINING_START_BlOCK) {
     LogPrintf("Z_UTXO_MINING_START_BlOCK: %d \n", Z_UTXO_MINING_START_BlOCK);
-        if(nHeight == Z_UTXO_MINING_START_BlOCK){
+        if(nHeight > Z_UTXO_MINING_START_BlOCK){
             LogPrintf("INSIDE Z_UTXO_MINING_START_BlOCK: \n");
             while (true) {  
                 LogPrintf("1@: \n");
