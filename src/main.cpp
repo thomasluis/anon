@@ -113,12 +113,24 @@ std::string GetUTXOFileName(int nHeight, bool isZUTXO, bool isFromBitcoinChain, 
         return "";
     }
 
-    std::stringstream ss;
-    ss << boost::format("utxo-%05i.bin") % (nHeight - forkStartHeight);
-    boost::filesystem::path utxo_file = utxo_path;
-    utxo_file /= ss.str();
+    if (isFromBitcoinChain) {
+        boost::filesystem::path utxo_path(forkUtxoPath);
+        std::stringstream ss;
+        ss << boost::format("bitcoin-utxo-%05i.bin") % (nHeight - forkStartHeight);
+        boost::filesystem::path utxo_file = utxo_path;
+        utxo_file /= ss.str();
+        return utxo_file.generic_string();
+    }
 
-    return utxo_file.generic_string();
+    if (isFromZClassicChain) {
+        boost::filesystem::path utxo_path(forkUtxoPath);
+        std::stringstream ss;
+        ss << boost::format("zclassic-utxo-%05i.bin") % (nHeight - forkStartHeight);
+        boost::filesystem::path utxo_file = utxo_path;
+        utxo_file /= ss.str();
+        return utxo_file.generic_string();
+    }
+
 }
 ///////kevin aditions
 // std::string GetUTXOFileName(int nHeight, bool isZUTXO)

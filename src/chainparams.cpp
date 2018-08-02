@@ -236,7 +236,7 @@ public:
         };
 
         nForkStartHeight = 5;
-        nForkHeightRange = 2;
+        nForkHeightRange = 5;
         zUtxoMiningStartBlock = 6;
     }
 };
