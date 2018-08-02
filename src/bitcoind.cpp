@@ -74,7 +74,7 @@ bool AppInit(int argc, char* argv[])
     // Process help and version before taking care about datadir
     if (mapArgs.count("-?") || mapArgs.count("-h") ||  mapArgs.count("-help") || mapArgs.count("-version"))
     {
-        std::string strUsage = _("Bitcoin Private Daemon") + " " + _("version") + " " + FormatFullVersion() + "\n" + PrivacyInfo();
+        std::string strUsage = _("Anonymous Bitcoin Daemon") + " " + _("version") + " " + FormatFullVersion() + "\n" + PrivacyInfo();
 
         if (mapArgs.count("-version"))
         {
@@ -83,7 +83,7 @@ bool AppInit(int argc, char* argv[])
         else
         {
             strUsage += "\n" + _("Usage:") + "\n" +
-                  "  btcpd [options]                     " + _("Start BTCP Daemon") + "\n";
+                  "  anond [options]                     " + _("Start ANON Daemon") + "\n";
 
             strUsage += "\n" + HelpMessage(HMM_BITCOIND);
         }
@@ -104,21 +104,21 @@ bool AppInit(int argc, char* argv[])
             ReadConfigFile(mapArgs, mapMultiArgs);
         } catch (const missing_zcash_conf& e) {
             fprintf(stderr,
-                (_("Before starting btcpd, you need to create a configuration file:\n"
+                (_("Before starting anond, you need to create a configuration file:\n"
                    "%s\n"
                    "It can be completely empty! That indicates you are happy with the default\n"
-                   "configuration of btcpd. But requiring a configuration file to start ensures\n"
-                   "that btcpd won't accidentally compromise your privacy if there was a default\n"
+                   "configuration of anond. But requiring a configuration file to start ensures\n"
+                   "that anond won't accidentally compromise your privacy if there was a default\n"
                    "option you needed to change.\n"
                    "\n"
                    "You can look at the example configuration file for suggestions of default\n"
                    "options that you may want to change. It should be in one of these locations,\n"
-                   "depending on how you installed Bitcoin Private:\n") +
+                   "depending on how you installed Anonymous Bitcoin:\n") +
                  _("- Source code:  %s\n"
                    "- .deb package: %s\n")).c_str(),
                 GetConfigFile().string().c_str(),
-                "contrib/debian/examples/btcprivate.conf",
-                "/usr/share/doc/btcp/examples/btcprivate.conf");
+                "contrib/debian/examples/anon.conf",
+                "/usr/share/doc/anon/examples/anon.conf");
             return false;
         } catch (const std::exception& e) {
             fprintf(stderr,"Error reading configuration file: %s\n", e.what());
@@ -145,14 +145,14 @@ bool AppInit(int argc, char* argv[])
 
         if (fCommandLine)
         {
-            fprintf(stderr, "Error: There is no RPC client functionality in btcpd. Use the btcp-cli utility instead.\n");
+            fprintf(stderr, "Error: There is no RPC client functionality in anond. Use the anon-cli utility instead.\n");
             exit(1);
         }
 #ifndef WIN32
         fDaemon = GetBoolArg("-daemon", false);
         if (fDaemon)
         {
-            fprintf(stdout, "BTCP server starting\n");
+            fprintf(stdout, "ANON server starting\n");
 
             // Daemonize
             pid_t pid = fork();

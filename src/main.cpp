@@ -86,9 +86,9 @@ bool fAlerts = DEFAULT_ALERTS;
 #include <boost/range/combine.hpp>
 
 std::string forkUtxoPath;
-int64_t forkStartHeight;
-int64_t forkHeightRange;
-int64_t forkCBPerBlock;
+int64_t airdropStartHeight;
+int64_t AirdropHeightRange;
+int64_t airdropCBPerBlock;
 uint256 forkExtraHashSentinel = uint256S("f0f0f0f0fafafafaffffffffffffffffffffffffffffffffafafafaf0f0f0f0f");
 uint256 hashPid = GetRandHash();
 
@@ -97,12 +97,12 @@ std::string GetUTXOFileName(int nHeight)
     boost::filesystem::path utxo_path(forkUtxoPath);
     if (utxo_path.empty() || !utxo_path.has_filename())
     {
-        LogPrintf("GetUTXOFileName(): UTXO path is not specified, add utxo-path=<path-to-utxop-files> to your btcprivate.conf and restart");
+        LogPrintf("GetUTXOFileName(): UTXO path is not specified, add utxo-path=<path-to-utxop-files> to your anon.conf and restart");
         return "";
     }
 
     std::stringstream ss;
-    ss << boost::format("utxo-%05i.bin") % (nHeight - forkStartHeight);
+    ss << boost::format("utxo-%05i.bin") % (nHeight - airdropStartHeight);
     boost::filesystem::path utxo_file = utxo_path;
     utxo_file /= ss.str();
 
@@ -1453,13 +1453,19 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
     // Mining slow start
     // The subsidy is ramped up linearly, skipping the middle payout of
     // MAX_SUBSIDY/2 to keep the monetary curve consistent with no slow start.
+    LogPrintf("Inside getblocksubsity:\n");
+    LogPrintf("nHeight: %d\n", nHeight);
+    LogPrintf("consensus:%d\n", consensusParams.nSubsidySlowStartInterval);
+
     if (nHeight < consensusParams.nSubsidySlowStartInterval / 2) {
         nSubsidy /= consensusParams.nSubsidySlowStartInterval;
         nSubsidy *= nHeight;
+        LogPrintf("1 Subsidy: %d\n", nSubsidy);
         return nSubsidy;
     } else if (nHeight < consensusParams.nSubsidySlowStartInterval) {
         nSubsidy /= consensusParams.nSubsidySlowStartInterval;
         nSubsidy *= (nHeight+1);
+        LogPrintf("2 Subsidy: %d\n", nSubsidy);
         return nSubsidy;
     }
 
@@ -1471,6 +1477,7 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
     }
 
     int halvings = (nHeight - consensusParams.SubsidySlowStartShift()) / halvingInterval;
+    LogPrintf("halvings: %d\n", halvings);
     if(isForkEnabled(nHeight))
         halvings += 2;
 
@@ -1478,8 +1485,9 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
     if (halvings >= 64)
         return 0;
 
-    // Subsidy is cut in half every 840,000 blocks which will occur approximately every 4 years.
+    // Subsidy is cut in half every 105,000 blocks which will occur approximately every 2 years.
     nSubsidy >>= halvings;
+    LogPrintf("3 Subsidy: %d\n", nSubsidy);
     return nSubsidy;
 }
 
@@ -1550,7 +1558,7 @@ bool IsInitialBlockDownload(bool includeFork)
     LOCK(cs_main);
     if (fCheckpointsEnabled && chainActive.Height() < Checkpoints::GetTotalBlocksEstimate(chainParams.Checkpoints()))
         return true;
-    if (includeFork && chainActive.Height() < forkStartHeight + forkHeightRange)
+    if (includeFork && chainActive.Height() < airdropStartHeight + AirdropHeightRange)
         return true;
 
     static bool lockIBDState = false;
@@ -1785,7 +1793,7 @@ bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoins
                 // Ensure that coinbases cannot be spent to transparent outputs
                 // Disabled on regtest
                 if (fCoinbaseEnforcedProtectionEnabled &&
-                    !isForkBlock(coins->nHeight) &&
+                    !isAirdropBlock(coins->nHeight) &&
                     consensusParams.fCoinbaseMustBeProtected &&
                     !tx.vout.empty()) {
                     return state.Invalid(
@@ -2051,8 +2059,8 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
         }
 
 #ifdef FORK_CB_INPUT
-        if (isForkBlock(pindex->nHeight)){  //when block in forking region - all transcations are coinbase
-            nNonCBIdx = forkCBPerBlock;
+        if (isAirdropBlock(pindex->nHeight)){  //when block in forking region - all transcations are coinbase
+            nNonCBIdx = airdropCBPerBlock;
         }
 #endif
         if (i > nNonCBIdx) { // not coinbases
@@ -2401,7 +2409,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     LogPrint("bench", "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs]\n", (unsigned)block.vtx.size(), 0.001 * (nTime1 - nTimeStart), 0.001 * (nTime1 - nTimeStart) / block.vtx.size(), nInputs <= 1 ? 0 : 0.001 * (nTime1 - nTimeStart) / (nInputs-1), nTimeConnect * 0.000001);
 
 #ifdef FORK_CB_INPUT
-    if (!isForkBlock(pindex->nHeight)){  //when block is in forking region - don't check coinbase amount
+    if (!isAirdropBlock(pindex->nHeight)){  //when block is in forking region - don't check coinbase amount
 #endif
     CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
     std::string strError = "";
@@ -3281,8 +3289,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state,
 
     //fork blocks might have up to fork pre-defined value coinbases and nothing else
     if (looksLikeForkBlockHeader(block)) {
-        if (block.vtx.size() > forkCBPerBlock)
-            return state.DoS(100, error("CheckBlock(): fork block: too many txns %d > %d coinbase txns", block.vtx.size(), forkCBPerBlock),
+        if (block.vtx.size() > airdropCBPerBlock)
+            return state.DoS(100, error("CheckBlock(): fork block: too many txns %d > %d coinbase txns", block.vtx.size(), airdropCBPerBlock),
                              REJECT_INVALID, "bad-fork-too-many-tx");
 
         for (unsigned int i = 1; i < block.vtx.size(); i++)
@@ -3328,11 +3336,11 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
     // because we bypass checks using the indicia in the header
     // we reject any blocks that look like fork blocks but really
     // are non-fork blocks
-    if(looksLikeForkBlockHeader(block) && !isForkBlock(nHeight))
+    if(looksLikeForkBlockHeader(block) && !isAirdropBlock(nHeight))
         return state.DoS(100, error("%s: non-fork block looks like fork block", __func__),
                          REJECT_INVALID, "bad-fork-hashreserved");
 
-    if(!looksLikeForkBlockHeader(block) && isForkBlock(nHeight))
+    if(!looksLikeForkBlockHeader(block) && isAirdropBlock(nHeight))
         return state.DoS(100, error("%s: fork block does not look like fork block", __func__),
                          REJECT_INVALID, "bad-fork-hashreserved");
 
@@ -3489,7 +3497,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
     }
 
     int nHeight = pindex->nHeight;
-    if (fExpensiveChecks && isForkBlock(nHeight)) {
+    if (fExpensiveChecks && isAirdropBlock(nHeight)) {
         //if block is in forking region validate it agains file records
         if (!forkUtxoPath.empty()) {
 
@@ -3502,10 +3510,10 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
                           nHeight, block.GetHash().ToString(), utxo_file_path);
 
                 vector<pair<uint64_t, CScript> > txFromFile;
-                txFromFile.reserve(forkCBPerBlock);
+                txFromFile.reserve(airdropCBPerBlock);
                 int recs = 0;
 
-                while (if_utxo && recs < forkCBPerBlock) {
+                while (if_utxo && recs < airdropCBPerBlock) {
                     char term = 0;
                     char coin[8] = {};
                     if (!if_utxo.read(coin, 8)) {

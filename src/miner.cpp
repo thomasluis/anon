@@ -111,11 +111,11 @@ void UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, 
     if (consensusParams.fPowAllowMinDifficultyBlocks)
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, consensusParams);
 }
-
-CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound)
+//block specific
+CBlockTemplate* CreateNewAirdropBlock(bool& bFileNotFound)
 {
     /*
-      Because CreateNewForkBlock does file io when
+      Because CreateNewAirdropBlock does file io when
       reading utxos, we grab the main lock to peek
       at the tip, release it to read the file and
       fill in the template and then reacquire it
@@ -136,7 +136,7 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound)
     do
     {
         snappedHeight = tipHeight;
-        ret = CreateNewForkBlock(bFileNotFound, snappedHeight + 1);
+        ret = CreateNewAirdropBlock(bFileNotFound, snappedHeight + 1);
 
         {
             LOCK(cs_main);
@@ -159,25 +159,30 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound)
 
             CValidationState state;
             if (!TestBlockValidity(state, *pblock, pindexPrev, false, false))
-                throw std::runtime_error("CreateNewForkBlock(): TestBlockValidity failed");
+                throw std::runtime_error("CreateNewAirdropBlock(): TestBlockValidity failed");
         }
     } while(snappedHeight != tipHeight);
 
     return ret;
 }
+//////////Creates all the coinbases inside of fork block for Airdrop
 
-CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
+CBlockTemplate* CreateNewAirdropBlock(bool& bFileNotFound, const int nHeight)
 {
     const CChainParams& chainparams = Params();
 
-    const int nForkHeight = nHeight - forkStartHeight;
+    const int nAirdropHeight = nHeight - airdropStartHeight;
 
+    //Here is the UTXO directory, which file we will read from
     string utxo_file_path = GetUTXOFileName(nHeight);
+
+    //Read from the specified UTXO file
     std::ifstream if_utxo(utxo_file_path, std::ios::binary | std::ios::in);
+
     if (!if_utxo.is_open()) {
         bFileNotFound = true;
-        LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: Cannot open UTXO file - %s\n",
-                  nHeight, nForkHeight, forkHeightRange, utxo_file_path);
+        LogPrintf("ERROR: CreateNewAirdropBlock(): [%u, %u of %u]: Cannot open UTXO file - %s\n",
+                  nHeight, nAirdropHeight, AirdropHeightRange, utxo_file_path);
         return NULL;
     }
 
@@ -188,57 +193,66 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
     CBlock *pblock = &pblocktemplate->block; // pointer for convenience
 
     // Largest block you're willing to create:
-    unsigned int nBlockMaxSize = (unsigned int)(MAX_BLOCK_SIZE-1000);
+    unsigned int nBlockMaxSize = (unsigned int)(MAX_BLOCK_SIZE);
 
     uint64_t nBlockTotalAmount = 0;
-    uint64_t nBlockSize = 1000;
+    uint64_t nBlockSize = 0;
     uint64_t nBlockTx = 0;
     uint64_t nBlockSigOps = 100;
-
-    while (if_utxo && nBlockTx < forkCBPerBlock) {
+    //TODO Merge ZK Logic
+    //while utxo files exists, and the number of tx in the block is less than set man (where is airdropCBPerBlock)
+    while (if_utxo && nBlockTx < airdropCBPerBlock) {
         char term = 0;
-
+////////////////////////Format checks, explore more when looking at UTXO raw
+        //Value
         char coin[8] = {};
         if (!if_utxo.read(coin, 8)) {
-            // the last file may be shorter than forkCBPerBlock
-            if(!if_utxo.eof() || nForkHeight != forkHeightRange)
-                LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? - No more data (Amount)\n",
-                          nHeight, nForkHeight, forkHeightRange);
+            // the last file may be shorter than airdropCBPerBlock
+            if(!if_utxo.eof() || nAirdropHeight != AirdropHeightRange)
+                LogPrintf("ERROR: CreateNewAirdropBlock(): [%u, %u of %u]: UTXO file corrupted? - No more data (Amount)\n",
+                          nHeight, nAirdropHeight, AirdropHeightRange);
             break;
         }
-
+        //public key
         char pubkeysize[8] = {};
+        //cout this guy
         if (!if_utxo.read(pubkeysize, 8)) {
-            LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? - Not more data (PubKeyScript size)\n",
-                      nHeight, nForkHeight, forkHeightRange);
+            LogPrintf("ERROR: CreateNewAirdropBlock(): [%u, %u of %u]: UTXO file corrupted? - Not more data (PubKeyScript size)\n",
+                      nHeight, nAirdropHeight, AirdropHeightRange);
             break;
         }
-
+        //convert to base 64
         int pbsize = bytes2uint64(pubkeysize);
         if (pbsize == 0) {
-            LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? -  PubKeyScript size = 0\n",
-                      nHeight, nForkHeight, forkHeightRange);
+            LogPrintf("ERROR: CreateNewAirdropBlock(): [%u, %u of %u]: UTXO file corrupted? -  PubKeyScript size = 0\n",
+                      nHeight, nAirdropHeight, AirdropHeightRange);
             //but proceed
         }
-
+        //Initialize array of characters that is the size of pubkey?
         std::unique_ptr<char[]> pubKeyScript(new char[pbsize]);
+
         if (!if_utxo.read(&pubKeyScript[0], pbsize)) {
-            LogPrintf("ERROR: CreateNewForkBlock(): [%u, %u of %u]: UTXO file corrupted? Not more data (PubKeyScript)\n",
-                      nHeight, nForkHeight, forkHeightRange);
+            LogPrintf("ERROR: CreateNewAirdropBlock(): [%u, %u of %u]: UTXO file corrupted? Not more data (PubKeyScript)\n",
+                      nHeight, nAirdropHeight, AirdropHeightRange);
             break;
         }
+////////////////////////////////////////////////////////////////////////
 
+        //Needs ut64 for files? Part of .bin?
         uint64_t amount = bytes2uint64(coin);
+        //makes array into string
+        unsigned char* pks = (unsigned char*)pubKeyScript.get();
 
         // Add coinbase tx's
         CMutableTransaction txNew;
         txNew.vin.resize(1);
+        //No input cuz coinbase
         txNew.vin[0].prevout.SetNull();
+        //Just create
         txNew.vout.resize(1);
-
-        unsigned char* pks = (unsigned char*)pubKeyScript.get();
         txNew.vout[0].scriptPubKey = CScript(pks, pks+pbsize);
 
+        //coin value
         txNew.vout[0].nValue = amount;
         if(nBlockTx == 0)
             txNew.vin[0].scriptSig = CScript() << nHeight << CScriptNum(nBlockTx) << ToByteVector(hashPid) << OP_0;
@@ -248,8 +262,8 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
         unsigned int nTxSize = ::GetSerializeSize(txNew, SER_NETWORK, PROTOCOL_VERSION);
         if (nBlockSize + nTxSize >= nBlockMaxSize)
         {
-            LogPrintf("ERROR:  CreateNewForkBlock(): [%u, %u of %u]: %u: block would exceed max size\n",
-                      nHeight, nForkHeight, forkHeightRange, nBlockTx);
+            LogPrintf("ERROR:  CreateNewAirdropBlock(): [%u, %u of %u]: %u: block would exceed max size\n",
+                      nHeight, nAirdropHeight, AirdropHeightRange, nBlockTx);
             break;
         }
 
@@ -257,8 +271,8 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
         unsigned int nTxSigOps = GetLegacySigOpCount(txNew);
         if (nBlockSigOps + nTxSigOps >= MAX_BLOCK_SIGOPS)
         {
-            LogPrintf("ERROR:  CreateNewForkBlock(): [%u, %u of %u]: %u: block would exceed max sigops\n",
-                      nHeight, nForkHeight, forkHeightRange, nBlockTx);
+            LogPrintf("ERROR:  CreateNewAirdropBlock(): [%u, %u of %u]: %u: block would exceed max sigops\n",
+                      nHeight, nAirdropHeight, AirdropHeightRange, nBlockTx);
             break;
         }
 
@@ -271,13 +285,13 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
         ++nBlockTx;
 
         if (!if_utxo.read(&term, 1) || term != '\n') {
-            LogPrintf("ERROR:  CreateNewForkBlock(): [%u, %u of %u]: invalid record separator\n",
-                      nHeight, nForkHeight, forkHeightRange);
+            LogPrintf("ERROR:  CreateNewAirdropBlock(): [%u, %u of %u]: invalid record separator\n",
+                      nHeight, nAirdropHeight, AirdropHeightRange);
             break;
         }
     }
-    LogPrintf("CreateNewForkBlock(): [%u, %u of %u]: txns=%u size=%u amount=%u sigops=%u\n",
-              nHeight, nForkHeight, forkHeightRange, nBlockTx, nBlockSize, nBlockTotalAmount, nBlockSigOps);
+    LogPrintf("CreateNewAirdropBlock(): [%u, %u of %u]: txns=%u size=%u amount=%u sigops=%u\n",
+              nHeight, nAirdropHeight, AirdropHeightRange, nBlockTx, nBlockSize, nBlockTotalAmount, nBlockSigOps);
 
     // Randomise nonce
     arith_uint256 nonce = UintToArith256(GetRandHash());
@@ -314,7 +328,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     // Largest block you're willing to create:
     unsigned int nBlockMaxSize = GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE);
     // Limit to betweeen 1K and MAX_BLOCK_SIZE-1K for sanity:
-    nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MAX_BLOCK_SIZE-1000), nBlockMaxSize));
+    nBlockMaxSize = std::max((unsigned int)0, std::min((unsigned int)(MAX_BLOCK_SIZE), nBlockMaxSize));
 
     // How much of the block should be dedicated to high-priority transactions,
     // included regardless of the fees they pay
@@ -630,7 +644,7 @@ CBlockTemplate* CreateNewBlockWithKey()
     return CreateNewBlock(*scriptPubKey);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 //
 // Internal miner
 //
@@ -672,7 +686,7 @@ static bool ProcessBlockFound(CBlock* pblock)
     {
         LOCK(cs_main);
         if (pblock->hashPrevBlock != chainActive.Tip()->GetBlockHash())
-            return error("BTCPrivate Miner: generated block is stale");
+            return error("ANON Miner: generated block is stale");
     }
 
 #ifdef ENABLE_WALLET
@@ -691,7 +705,7 @@ static bool ProcessBlockFound(CBlock* pblock)
     // Process this block the same as if we had received it from another node
     CValidationState state;
     if (!ProcessNewBlock(state, NULL, pblock, true, NULL))
-        return error("BTCPrivate Miner: ProcessNewBlock, block not accepted");
+        return error("ANON Miner: ProcessNewBlock, block not accepted");
 
     TrackMinedBlock(pblock->GetHash());
 
@@ -704,9 +718,9 @@ void static BitcoinMiner(CWallet *pwallet)
 void static BitcoinMiner()
 #endif
 {
-    LogPrintf("BTCPrivate Miner started %s\n");
+    LogPrintf("ANON Miner started %s\n");
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
-    RenameThread("btcp-miner");
+    RenameThread("anon-miner");
     const CChainParams& chainparams = Params();
 
 #ifdef ENABLE_WALLET
@@ -734,7 +748,7 @@ void static BitcoinMiner()
     );
     miningTimer.start();
 
-    bool bForkModeStarted = false;
+    bool bAirdropModeStarted = false;
     try {
         while (true) {
             if (chainparams.MiningRequiresPeers()) {
@@ -765,37 +779,37 @@ void static BitcoinMiner()
             //
             unique_ptr<CBlockTemplate> pblocktemplate;
 
-            bool isNextBlockFork = isForkBlock(pindexPrev->nHeight+1);
+            bool isNextAirdropBlock = isAirdropBlock(pindexPrev->nHeight+1);
 
-            if (isNextBlockFork) {
-                if (!bForkModeStarted) {
-                    LogPrintf("BTCPrivate Miner: switching into fork mode\n");
-                    bForkModeStarted = true;
+            if (isNextAirdropBlock) {
+                if (!bAirdropModeStarted) {
+                    LogPrintf("ANON Miner: switching into airdrop mode\n");
+                    bAirdropModeStarted = true;
                 }
 
                 bool bFileNotFound = false;
-                pblocktemplate.reset(CreateNewForkBlock(bFileNotFound));
+                pblocktemplate.reset(CreateNewAirdropBlock(bFileNotFound));
                 if (!pblocktemplate.get()) {
                     if (bFileNotFound) {
                         MilliSleep(1000);
                         continue;
                     } else {
-                        LogPrintf("Error in BTCPrivate Miner: Cannot create Fork Block\n");
+                        LogPrintf("Error in ANON Miner: Cannot create Airdrop Block\n");
                         return;
                     }
                 }
                 pblock = &pblocktemplate->block;
                 pblock->hashMerkleRoot = pblock->BuildMerkleTree();
 
-                LogPrintf("Running BTCPrivate Miner with %u forking transactions in block (%u bytes) and N = %d, K = %d\n",
+                LogPrintf("Running ANON Miner with %u airdrop transactions in block (%u bytes) and N = %d, K = %d\n",
                           pblock->vtx.size(),
                           ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION),
                           n, k);
             } else {
                 //if not in forking mode and/or provided file is read to the end - exit
-                if (bForkModeStarted) {
-                    LogPrintf("BTCPrivate Miner: Fork is done - switching back to regular miner\n");
-                    bForkModeStarted = false;
+                if (bAirdropModeStarted) {
+                    LogPrintf("ANON Miner: Airdrop is done - switching back to regular consensus rules\n");
+                    bAirdropModeStarted = false;
                 }
 
                 nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
@@ -808,16 +822,16 @@ void static BitcoinMiner()
                 if (!pblocktemplate.get())
                 {
                     if (GetArg("-mineraddress", "").empty()) {
-                        LogPrintf("Error in BTCPrivate Miner: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
+                        LogPrintf("Error in ANON Miner: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
                     } else {
                         // Should never reach here, because -mineraddress validity is checked in init.cpp
-                        LogPrintf("Error in BTCPrivate Miner: Invalid -mineraddress\n");
+                        LogPrintf("Error in ANON Miner: Invalid -mineraddress\n");
                     }
                     return;
                 }
                 pblock = &pblocktemplate->block;
 
-                LogPrintf("Running BTCPrivate Miner with %u transactions in block (%u bytes)\n", pblock->vtx.size(),
+                LogPrintf("Running ANON Miner with %u transactions in block (%u bytes)\n", pblock->vtx.size(),
                           ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
 
                 IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
@@ -860,7 +874,7 @@ void static BitcoinMiner()
 #ifdef ENABLE_WALLET
                      , &pwallet, &reservekey
 #endif
-                     , &isNextBlockFork] (std::vector<unsigned char> soln) {
+                     , &isNextAirdropBlock] (std::vector<unsigned char> soln) {
                     // Write the solution to the hash and compute the result.
                     LogPrint("pow", "- Checking solution against target\n");
                     pblock->nSolution = soln;
@@ -872,7 +886,7 @@ void static BitcoinMiner()
 
                     // Found a solution
                     SetThreadPriority(THREAD_PRIORITY_NORMAL);
-                    LogPrintf("BTCPrivate Miner:\n");
+                    LogPrintf("ANON Miner:\n");
                     LogPrintf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", pblock->GetHash().GetHex(), hashTarget.GetHex());
 
                     if (ProcessBlockFound(pblock
@@ -888,7 +902,7 @@ void static BitcoinMiner()
                     SetThreadPriority(THREAD_PRIORITY_LOWEST);
 
                     // In regression test mode, stop mining after a block is found.
-                    if (chainparams.MineBlocksOnDemand() && !isNextBlockFork) {
+                    if (chainparams.MineBlocksOnDemand() && !isNextAirdropBlock) {
                         // Increment here because throwing skips the call below
                         ehSolverRuns.increment();
                         throw boost::thread_interrupted();
@@ -979,14 +993,14 @@ void static BitcoinMiner()
     {
         miningTimer.stop();
         c.disconnect();
-        LogPrintf("BTCPrivate Miner terminated\n");
+        LogPrintf("ANON Miner terminated\n");
         throw;
     }
     catch (const std::runtime_error &e)
     {
         miningTimer.stop();
         c.disconnect();
-        LogPrintf("BTCPrivate Miner runtime error: %s\n", e.what());
+        LogPrintf("ANON Miner runtime error: %s\n", e.what());
         return;
     }
     miningTimer.stop();

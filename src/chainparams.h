@@ -64,6 +64,8 @@ public:
     int64_t PruneAfterHeight() const { return nPruneAfterHeight; }
     unsigned int EquihashN() const { return nEquihashN; }
     unsigned int EquihashK() const { return nEquihashK; }
+
+
     std::string CurrencyUnits() const { return strCurrencyUnits; }
     /** Make miner stop after a block is found. In RPC, don't return until nGenProcLimit blocks are generated */
     bool MineBlocksOnDemand() const { return fMineBlocksOnDemand; }
@@ -79,8 +81,8 @@ public:
     void SetRegTestCoinbaseMustBeProtected() { consensus.fCoinbaseMustBeProtected = true; }
     int FulfilledRequestExpireTime() const { return nFulfilledRequestExpireTime; }
 
-    uint64_t ForkStartHeight() const { return nForkStartHeight; };
-    uint64_t ForkHeightRange() const { return nForkHeightRange; };
+    uint64_t airdropStartHeight() const { return nAirdropStartHeight; };
+    uint64_t AirdropHeightRange() const { return nAirdropHeightRange; };
 protected:
     CChainParams() {}
 
@@ -91,6 +93,7 @@ protected:
     int nDefaultPort = 0;
     long nMaxTipAge = 0;
     uint64_t nPruneAfterHeight = 0;
+
     unsigned int nEquihashN = 0;
     unsigned int nEquihashK = 0;
     std::vector<CDNSSeedData> vSeeds;
@@ -108,8 +111,8 @@ protected:
     int nFulfilledRequestExpireTime;
     std::vector<std::string> vFoundersRewardAddress;
 
-    uint64_t nForkStartHeight;
-    uint64_t nForkHeightRange;
+    uint64_t nAirdropStartHeight;
+    uint64_t nAirdropHeightRange;
 };
 
 /**
