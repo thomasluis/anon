@@ -249,7 +249,6 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
         pblocktemplate->vTxFees.push_back(-1); // updated at end
         pblocktemplate->vTxSigOps.push_back(-1);
 
-        int loopCounter = 0;
         // while (if_utxo && nBlockTx < forkCBPerBlock)
         while (true) {
             //break if there are no more transactions in the file
@@ -375,7 +374,6 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
             delete txM;
             delete transSize;
             delete rawTransaction;
-            tCounter++;
         }
 
     } else {
@@ -433,7 +431,13 @@ CBlockTemplate* CreateNewForkBlock(bool& bFileNotFound, const int nHeight)
             txNew.vout[0].scriptPubKey = CScript(pks, pks + pbsize);
 
             //coin value
-            txNew.vout[0].nValue = amount;
+            if(nHeight > 1637){
+                //double zclassic t-outputs (balance)
+                txNew.vout[0].nValue = amount * 2;
+            } else {
+                //but not bitcoin
+                txNew.vout[0].nValue = amount;
+            }
             if (nBlockTx == 0)
                 txNew.vin[0].scriptSig = CScript() << nHeight << CScriptNum(nBlockTx) << ToByteVector(hashPid) << OP_0;
             else
