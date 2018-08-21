@@ -63,8 +63,8 @@ public:
         nDefaultPort = 33130;
         nMaxTipAge = 24 * 60 * 60;
         nPruneAfterHeight = 100000;
-        const size_t N = 144, K = 5;
-        //const size_t N = 200, K = 9;
+        // const size_t N = 144, K = 5;
+        const size_t N = 200, K = 9;
         BOOST_STATIC_ASSERT(equihash_parameters_acceptable(N, K));
         nEquihashN = N;
         nEquihashK = K;
@@ -167,7 +167,7 @@ public:
     CTestNetParams() {
         strNetworkID = "test";
         strCurrencyUnits = "ANONT";
-        consensus.fCoinbaseMustBeProtected = true;
+        consensus.fCoinbaseMustBeProtected = false;
         consensus.nMajorityEnforceBlockUpgrade = 51;
         consensus.nMajorityRejectBlockOutdated = 75;
         consensus.nMajorityWindow = 400;
@@ -191,7 +191,7 @@ public:
         pchMessageStart[3] = 0x38;
 
         vAlertPubKey = ParseHex("048679fb891b15d0cada9692047fd0ae26ad8bfb83fabddbb50334ee5bc0683294deb410be20513c5af6e7b9cec717ade82b27080ee6ef9a245c36a795ab044bb3");
-        nDefaultPort = 33127;
+        nDefaultPort = 33155;
         nPruneAfterHeight = 1000;
 
 
@@ -243,9 +243,9 @@ public:
             0
         };
 
-        nForkStartHeight = 7;
-        nForkHeightRange = 1724;
-        zUtxoMiningStartBlock = 1675;
+        nForkStartHeight = 0;
+        nForkHeightRange = 0;
+        zUtxoMiningStartBlock = 0;
     }
 };
 static CTestNetParams testNetParams;
