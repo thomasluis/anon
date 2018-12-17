@@ -259,10 +259,10 @@ public:
             0
         };
 
-        nForkStartHeight = 2;
-        nForkHeightRange = 1;
-        nZtransparentStartBlock = 5;
-        nZshieldedStartBlock = 6;
+        nForkStartHeight = 0;
+        nForkHeightRange = 0;
+        nZtransparentStartBlock = 0;
+        nZshieldedStartBlock = 0;
     }
 };
 static CTestNetParams testNetParams;
