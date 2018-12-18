@@ -251,6 +251,10 @@ public:
         fTestnetToBeDeprecatedFieldRPC = true;
         nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
 
+        //Sporks
+        strSporkPubKey = "046d545575c6338d649008224cc349e6a3f7fd80e1c4670f1afa1daedef2580ad856f09b0054db5932fa959bb3bc0317415a3edc64143964819441beb58d1f94f3";
+        strMasternodePaymentsPubKey = "046d545575c6338d649008224cc349e6a3f7fd80e1c4670f1afa1daedef2580ad856f09b0054db5932fa959bb3bc0317415a3edc64143964819441beb58d1f94f3";
+
         checkpointData = (Checkpoints::CCheckpointData) {
             boost::assign::map_list_of
             ( 0, consensus.hashGenesisBlock),
